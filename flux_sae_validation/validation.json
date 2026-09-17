@@ -1,0 +1,372 @@
+[
+  {
+    "id": "40470",
+    "content": "my sister arrived early to help me with the family bar bq .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.5532435774803162,
+        "r2": 0.8814104913002638,
+        "explained_variance": 0.8814104913002638,
+        "input_variance": 4.66519832611084,
+        "input_mean_abs": 0.7584899067878723,
+        "reconstruction_mean_abs": 0.7596893310546875,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.9356833696365356,
+        "r2": 0.3299169779378429,
+        "explained_variance": 0.3299169779378429,
+        "input_variance": 2.8887217044830322,
+        "input_mean_abs": 0.8343484997749329,
+        "reconstruction_mean_abs": 0.6031598448753357,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.537989616394043,
+        "r2": 0.47782501371769504,
+        "explained_variance": 0.47782501371769504,
+        "input_variance": 4.860419750213623,
+        "input_mean_abs": 1.1565649509429932,
+        "reconstruction_mean_abs": 0.9129093289375305,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/000.png"
+  },
+  {
+    "id": "40470",
+    "content": "every one else arrived soon after .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.4931440055370331,
+        "r2": 0.8940690603603728,
+        "explained_variance": 0.8940690603603728,
+        "input_variance": 4.655334949493408,
+        "input_mean_abs": 0.6875355243682861,
+        "reconstruction_mean_abs": 0.7160201668739319,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.6063233613967896,
+        "r2": 0.43617912968307193,
+        "explained_variance": 0.43617912968307193,
+        "input_variance": 2.8489959239959717,
+        "input_mean_abs": 0.7727767825126648,
+        "reconstruction_mean_abs": 0.45582735538482666,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 1.9989042282104492,
+        "r2": 0.35585427668278025,
+        "explained_variance": 0.35585427668278025,
+        "input_variance": 3.1031863689422607,
+        "input_mean_abs": 1.0108927488327026,
+        "reconstruction_mean_abs": 0.7531042695045471,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/001.png"
+  },
+  {
+    "id": "40470",
+    "content": "dad manned the grill .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.4995950162410736,
+        "r2": 0.8789347444619863,
+        "explained_variance": 0.8789347444619863,
+        "input_variance": 4.126658916473389,
+        "input_mean_abs": 0.6943469047546387,
+        "reconstruction_mean_abs": 0.6998737454414368,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.7546463012695312,
+        "r2": 0.39651609635904916,
+        "explained_variance": 0.39651609635904916,
+        "input_variance": 2.9075279235839844,
+        "input_mean_abs": 0.8670431971549988,
+        "reconstruction_mean_abs": 0.630748987197876,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.1702563762664795,
+        "r2": 0.4782725793881011,
+        "explained_variance": 0.4782725793881011,
+        "input_variance": 4.1597514152526855,
+        "input_mean_abs": 1.1713697910308838,
+        "reconstruction_mean_abs": 0.9526575207710266,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/002.png"
+  },
+  {
+    "id": "40470",
+    "content": "there was so much food and it was all delicious .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.5618672966957092,
+        "r2": 0.8841785934463342,
+        "explained_variance": 0.8841785934463342,
+        "input_variance": 4.851152420043945,
+        "input_mean_abs": 0.7350730299949646,
+        "reconstruction_mean_abs": 0.7418086528778076,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 2.014086961746216,
+        "r2": 0.42343666349891107,
+        "explained_variance": 0.42343666349891107,
+        "input_variance": 3.49326229095459,
+        "input_mean_abs": 0.951751708984375,
+        "reconstruction_mean_abs": 0.6367514729499817,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.4606971740722656,
+        "r2": 0.5062376480617952,
+        "explained_variance": 0.5062376480617952,
+        "input_variance": 4.983565807342529,
+        "input_mean_abs": 1.238647699356079,
+        "reconstruction_mean_abs": 0.9744548201560974,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/003.png"
+  },
+  {
+    "id": "40470",
+    "content": "we ended the day shooting off some fireworks .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.6492447853088379,
+        "r2": 0.8561233524585565,
+        "explained_variance": 0.8561233524585565,
+        "input_variance": 4.512509822845459,
+        "input_mean_abs": 0.7619476318359375,
+        "reconstruction_mean_abs": 0.7413938641548157,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.7812432050704956,
+        "r2": 0.5275793552430763,
+        "explained_variance": 0.5275793552430763,
+        "input_variance": 3.7704601287841797,
+        "input_mean_abs": 0.8736664652824402,
+        "reconstruction_mean_abs": 0.5966302752494812,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.29488205909729,
+        "r2": 0.4699256794889135,
+        "explained_variance": 0.4699256794889135,
+        "input_variance": 4.32935905456543,
+        "input_mean_abs": 1.1354528665542603,
+        "reconstruction_mean_abs": 0.905869722366333,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/004.png"
+  },
+  {
+    "id": "40471",
+    "content": "we gathered up some fire works to set off at dark .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.8053343892097473,
+        "r2": 0.8430253500356953,
+        "explained_variance": 0.8430253500356953,
+        "input_variance": 5.130346775054932,
+        "input_mean_abs": 0.792112410068512,
+        "reconstruction_mean_abs": 0.7633046507835388,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.856183648109436,
+        "r2": 0.5389931165750641,
+        "explained_variance": 0.5389931165750641,
+        "input_variance": 4.026368618011475,
+        "input_mean_abs": 0.8887470364570618,
+        "reconstruction_mean_abs": 0.5681026577949524,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.5357155799865723,
+        "r2": 0.4489441478059395,
+        "explained_variance": 0.4489441478059395,
+        "input_variance": 4.601558208465576,
+        "input_mean_abs": 1.1804203987121582,
+        "reconstruction_mean_abs": 0.8911840319633484,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/005.png"
+  },
+  {
+    "id": "40471",
+    "content": "we grilled some burgers that were oddly shaped .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.558584451675415,
+        "r2": 0.8537498863894002,
+        "explained_variance": 0.8537498863894002,
+        "input_variance": 3.819377899169922,
+        "input_mean_abs": 0.7142778038978577,
+        "reconstruction_mean_abs": 0.6777358055114746,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.7320815324783325,
+        "r2": 0.427501777020563,
+        "explained_variance": 0.427501777020563,
+        "input_variance": 3.025479316711426,
+        "input_mean_abs": 0.8461401462554932,
+        "reconstruction_mean_abs": 0.5305265784263611,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.032663345336914,
+        "r2": 0.4799501690544655,
+        "explained_variance": 0.4799501690544655,
+        "input_variance": 3.9085934162139893,
+        "input_mean_abs": 1.120636224746704,
+        "reconstruction_mean_abs": 0.8845313191413879,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/006.png"
+  },
+  {
+    "id": "40471",
+    "content": "our friends trickled in one by one !",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.5500116348266602,
+        "r2": 0.8321791928812869,
+        "explained_variance": 0.8321791928812869,
+        "input_variance": 3.277374505996704,
+        "input_mean_abs": 0.6511944532394409,
+        "reconstruction_mean_abs": 0.6361129283905029,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.7557648420333862,
+        "r2": 0.13105100751647614,
+        "explained_variance": 0.13105100751647614,
+        "input_variance": 2.020561456680298,
+        "input_mean_abs": 0.7845991253852844,
+        "reconstruction_mean_abs": 0.4984323978424072,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.254521369934082,
+        "r2": 0.44800841330353625,
+        "explained_variance": 0.44800841330353625,
+        "input_variance": 4.0843400955200195,
+        "input_mean_abs": 1.0816556215286255,
+        "reconstruction_mean_abs": 0.8169705271720886,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/007.png"
+  },
+  {
+    "id": "40471",
+    "content": "we got all the food on the grill to cook and ready to eat .",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.47077372670173645,
+        "r2": 0.8616423620144765,
+        "explained_variance": 0.8616423620144765,
+        "input_variance": 3.402585744857788,
+        "input_mean_abs": 0.670011043548584,
+        "reconstruction_mean_abs": 0.6536074280738831,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.85423743724823,
+        "r2": 0.35451228891875497,
+        "explained_variance": 0.35451228891875497,
+        "input_variance": 2.872614622116089,
+        "input_mean_abs": 0.8965968489646912,
+        "reconstruction_mean_abs": 0.6104113459587097,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.1360251903533936,
+        "r2": 0.5258462446800763,
+        "explained_variance": 0.5258462446800763,
+        "input_variance": 4.504920959472656,
+        "input_mean_abs": 1.1771782636642456,
+        "reconstruction_mean_abs": 0.9584398865699768,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/008.png"
+  },
+  {
+    "id": "40471",
+    "content": "the sunset was amazing that night !",
+    "metrics": {
+      "t1.0": {
+        "mse": 0.6987531185150146,
+        "r2": 0.8028294289077496,
+        "explained_variance": 0.8028294289077496,
+        "input_variance": 3.5439016819000244,
+        "input_mean_abs": 0.7487557530403137,
+        "reconstruction_mean_abs": 0.6880738735198975,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.5": {
+        "mse": 1.6052030324935913,
+        "r2": 0.3654212218407066,
+        "explained_variance": 0.3654212218407066,
+        "input_variance": 2.5295567512512207,
+        "input_mean_abs": 0.8163831830024719,
+        "reconstruction_mean_abs": 0.549111545085907,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      },
+      "t0.0": {
+        "mse": 2.0761971473693848,
+        "r2": 0.46004731110976493,
+        "explained_variance": 0.46004731110976493,
+        "input_variance": 3.845146417617798,
+        "input_mean_abs": 1.1003919839859009,
+        "reconstruction_mean_abs": 0.8694750666618347,
+        "active_fraction": 0.0026041667442768812,
+        "active_features_per_token": 32.0
+      }
+    },
+    "image": "flux_sae_validation/009.png"
+  }
+]

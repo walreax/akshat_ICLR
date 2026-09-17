@@ -1,0 +1,369 @@
+<title>Ablation Smoke Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --panel: #ecedf1;
+    --panel-line: #dadfe6;
+    --ink: #14171f;
+    --ink-dim: #4b5263;
+    --ink-faint: #7b8393;
+    --line: #dadfe6;
+    --necessity: #a6321d;
+    --necessity-soft: #f3e1dc;
+    --sufficiency: #0f6b5f;
+    --sufficiency-soft: #dcece8;
+    --control: #8a8f9c;
+    --control-soft: #eceef1;
+    --shadow: 0 1px 2px rgba(20,23,31,0.04), 0 8px 24px rgba(20,23,31,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101218; --surface: #161923; --panel: #1b1f29; --panel-line: #2a2f3a;
+      --ink: #e7e9ed; --ink-dim: #a4acbb; --ink-faint: #6e7686; --line: #2a2f3a;
+      --necessity: #e0806c; --necessity-soft: #33201c;
+      --sufficiency: #4fc2ac; --sufficiency-soft: #16302c;
+      --control: #8891a0; --control-soft: #1e222c;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101218; --surface: #161923; --panel: #1b1f29; --panel-line: #2a2f3a;
+    --ink: #e7e9ed; --ink-dim: #a4acbb; --ink-faint: #6e7686; --line: #2a2f3a;
+    --necessity: #e0806c; --necessity-soft: #33201c;
+    --sufficiency: #4fc2ac; --sufficiency-soft: #16302c;
+    --control: #8891a0; --control-soft: #1e222c;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans", -apple-system, sans-serif; font-size: 16px; line-height: 1.6; }
+  h1, h2, h3 { font-family: "Spectral", Georgia, serif; text-wrap: balance; color: var(--ink); }
+  code, .mono, .tabular { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  code { overflow-wrap: anywhere; }
+
+  .page { max-width: 980px; margin: 0 auto; padding: 64px 28px 120px; }
+  .prose { max-width: 700px; }
+  .prose p { color: var(--ink-dim); }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: 0.11em; text-transform: uppercase;
+    color: var(--ink-faint); display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sufficiency); flex: none; }
+  h1.title { font-size: clamp(32px, 4.8vw, 46px); font-weight: 600; line-height: 1.1; margin: 0 0 18px; max-width: 16ch; }
+  .verdict {
+    display: inline-flex; align-items: center; gap: 8px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; letter-spacing: 0.04em; color: var(--sufficiency); background: var(--sufficiency-soft);
+    padding: 5px 12px 5px 10px; border-radius: 5px; margin-bottom: 22px;
+  }
+  .verdict::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sufficiency); }
+  .thesis { font-size: 18px; color: var(--ink-dim); max-width: 650px; margin: 0 0 34px; }
+  .thesis strong { color: var(--ink); font-weight: 600; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 26px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-item .k { font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-faint); }
+  .meta-item .v { font-family: "IBM Plex Mono", monospace; font-size: 13.5px; color: var(--ink); }
+
+  section { margin-top: 76px; }
+  .section-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .section-num { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--sufficiency); }
+  h2 { font-size: 25px; font-weight: 600; margin: 0; }
+  .section-sub { color: var(--ink-dim); max-width: 640px; margin: 14px 0 30px; }
+
+  /* ---- result grid (the hero) ---- */
+  .result-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    box-shadow: var(--shadow); margin: 8px 0 12px;
+  }
+  .result-cell { background: var(--surface); display: flex; flex-direction: column; min-width: 0; }
+  .result-cell img { width: 100%; max-width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--panel); }
+  .result-cell .cell-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 0; }
+  .result-cell .tag {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.03em;
+    padding: 3px 9px 3px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .result-cell .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .tag.neutral { background: var(--panel); color: var(--ink-dim); border: 1px solid var(--panel-line); }
+  .tag.necessity { background: var(--necessity-soft); color: var(--necessity); }
+  .tag.sufficiency { background: var(--sufficiency-soft); color: var(--sufficiency); }
+  .tag.control { background: var(--control-soft); color: var(--control); }
+  .result-cell .stat { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-faint); }
+  .result-cell .stat b { color: var(--ink); font-weight: 600; }
+  .result-cell .cell-foot { padding: 8px 14px 14px; }
+  .result-cell .cell-title { font-size: 13.5px; font-weight: 600; color: var(--ink); margin: 8px 14px 0; }
+  .result-cap { font-size: 13px; color: var(--ink-faint); text-align: center; margin: 14px 0 0; }
+
+  .code-panel { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 8px; overflow-x: auto; margin: 4px 0; }
+  .code-panel .caption { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 16px 0; }
+  .code-panel pre { margin: 0; padding: 10px 16px 16px; font-family: "IBM Plex Mono", monospace; font-size: 13px; line-height: 1.65; color: var(--ink); white-space: pre; }
+  .code-panel .c-com { color: var(--ink-faint); }
+  .code-panel .c-kw { color: var(--sufficiency); }
+  .code-panel .c-str { color: var(--necessity); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; margin: 8px 0 0; max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; min-width: 520px; }
+  th, td { text-align: left; padding: 10px 16px; font-size: 13.5px; border-bottom: 1px solid var(--line); }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); background: var(--panel); }
+  td.mono { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+  td.num { font-family: "IBM Plex Mono", monospace; font-size: 13px; text-align: right; }
+  tr:last-child td { border-bottom: none; }
+  tr.hl td { font-weight: 600; }
+
+  .finding { display: grid; grid-template-columns: 34px 1fr; gap: 16px; padding: 22px 0; border-top: 1px solid var(--line); }
+  .finding:last-child { padding-bottom: 0; }
+  .finding-num { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--ink-faint); padding-top: 2px; }
+  .finding h3 { font-size: 17px; font-weight: 600; margin: 0 0 8px; }
+  .finding p { color: var(--ink-dim); margin: 0; max-width: 620px; }
+
+  .callout { border-left: 3px solid var(--control); background: var(--control-soft); border-radius: 0 8px 8px 0; padding: 16px 20px; font-size: 14.5px; color: var(--ink); margin: 28px 0; }
+  .callout strong { color: var(--ink); }
+  .callout a { color: var(--sufficiency); }
+
+  .checklist { display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
+  .check-item { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; font-size: 14px; }
+  .check-item .desc { color: var(--ink-dim); }
+  .check-item svg { margin-top: 4px; }
+
+  footer { margin-top: 100px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-faint); font-family: "IBM Plex Mono", monospace; }
+
+  @media (max-width: 620px) { .result-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="page">
+
+  <div class="eyebrow"><span class="dot"></span>MECHANISTIC INTERPRETABILITY &middot; SMOKE TEST RESULT</div>
+  <h1 class="title">Ablation Smoke Test</h1>
+  <div class="verdict">mechanism confirmed &middot; N=1, PixArt-&alpha;</div>
+  <p class="thesis">
+    One real row from <code>pixart_benchmark_full/concept_metrics.csv</code>, regenerated four ways on the
+    exact same seed. Patching the latent the metric actually named moved the image by
+    <strong>25&ndash;35&times;</strong> more than patching an unrelated one, by the identical procedure. This is
+    what that test looked like end to end &mdash; setup, code, numbers, and what it does and doesn't prove yet.
+  </p>
+  <div class="meta-row">
+    <div class="meta-item"><span class="k">Concept</span><span class="v">VIST Story 48292</span></div>
+    <div class="meta-item"><span class="k">Block &middot; step</span><span class="v">transformer_blocks.12 &middot; step 0</span></div>
+    <div class="meta-item"><span class="k">Seed</span><span class="v">42</span></div>
+    <div class="meta-item"><span class="k">Latent &middot; control</span><span class="v">616 &middot; 3155</span></div>
+  </div>
+
+  <!-- ================= RESULT GRID ================= -->
+  <section style="margin-top:56px;">
+    <div class="result-grid">
+      <div class="result-cell">
+        <div class="cell-head"><span class="tag neutral">baseline</span><span class="stat">reference</span></div>
+        <div class="cell-title">Unmodified</div>
+        <img src="images/baseline.png" alt="Baseline generation, no patch applied">
+        <div class="cell-foot"><span class="stat">seed 42 &middot; no hook attached</span></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-head"><span class="tag necessity">ablate</span><span class="stat">local <b>57.3</b> &middot; global <b>46.0</b></span></div>
+        <div class="cell-title">Latent 616 zeroed</div>
+        <img src="images/ablated.png" alt="Ablated generation, real latent zeroed">
+        <div class="cell-foot"><span class="stat">h &minus; &Delta; at block 12, step 0</span></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-head"><span class="tag sufficiency">amplify</span><span class="stat">local <b>67.3</b> &middot; global <b>47.0</b></span></div>
+        <div class="cell-title">Latent 616 &times;3</div>
+        <img src="images/amplified.png" alt="Amplified generation, real latent scaled up 3x">
+        <div class="cell-foot"><span class="stat">h + 2&Delta; at block 12, step 0</span></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-head"><span class="tag control">control</span><span class="stat">local <b>1.9</b> &middot; global <b>1.3</b></span></div>
+        <div class="cell-title">Latent 3155 zeroed (unrelated)</div>
+        <img src="images/control.png" alt="Control generation, unrelated latent zeroed">
+        <div class="cell-foot"><span class="stat">same procedure, different latent</span></div>
+      </div>
+    </div>
+    <p class="result-cap">Mean absolute pixel difference vs. baseline, 0&ndash;255 scale. Same seed, same block, same step &mdash; only the patched latent differs.</p>
+  </section>
+
+  <!-- ================= SETUP ================= -->
+  <section>
+    <div class="section-head"><span class="section-num">&sect;1</span><h2>Picking a real row to test</h2></div>
+    <div class="prose">
+      <p>
+        <code>smoke_test_ablation.py</code> doesn't invent a test case &mdash; it reads
+        <code>pixart_benchmark_full/concept_metrics.csv</code> (the live output of the benchmark run already
+        in progress), filters to rows with <code>concentration &gt; 0.6</code> so the picked latent is a
+        reasonably well-localized concept rather than noise, and takes the single highest-concentration row:
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td class="mono">concept_id</td><td class="mono">VIST Story 48292</td></tr>
+          <tr><td class="mono">block</td><td class="mono">transformer_blocks.12</td></tr>
+          <tr><td class="mono">seed</td><td class="mono">42</td></tr>
+          <tr><td class="mono">step_index</td><td class="mono">0  <span style="color:var(--ink-faint)">(timestep_fraction 0.0 &mdash; the first denoising step)</span></td></tr>
+          <tr><td class="mono">latent_idx</td><td class="mono">616</td></tr>
+          <tr><td class="mono">concentration</td><td class="mono">0.692</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose" style="max-width:640px;color:var(--ink-dim);margin-top:16px;">
+      The control latent (3155) is a second index drawn at random from the same SAE's 4096-wide dictionary,
+      re-rolled once to guarantee it isn't 616 itself. It never argmax-fired for any concept at this
+      (block, step) in the benchmark data &mdash; it's genuinely an unrelated direction, not a cherry-picked dead one.
+    </p>
+  </section>
+
+  <!-- ================= METHOD ================= -->
+  <section>
+    <div class="section-head"><span class="section-num">&sect;2</span><h2>Four generations, one seed</h2></div>
+    <p class="section-sub">
+      Baseline, ablate, amplify, and control-ablate each get a <em>fresh</em> <code>torch.Generator</code>
+      re-seeded to 42 &mdash; a generator is consumed as it's used, so reusing one object across four calls
+      would silently give the later ones different noise. <code>SAEFeaturePatcher</code> (built earlier this
+      session &mdash; see the <a href="#" style="color:var(--sufficiency);">Causal Ablation Protocol</a>) is
+      attached only for the three patched runs, and only fires at <code>step_index=0</code> on
+      <code>transformer_blocks.12</code>; everywhere else the forward pass is untouched.
+    </p>
+    <div class="code-panel">
+      <div class="caption">smoke_test_ablation.py &middot; the actual generation loop</div>
+      <pre><span class="c-kw">def</span> gen(mode: str, patch_latent<span class="c-com">=</span><span class="c-kw">None</span>):
+    generator <span class="c-com">=</span> torch.Generator(device<span class="c-com">=</span><span class="c-str">"cpu"</span>).manual_seed(seed)
+    patcher <span class="c-com">=</span> <span class="c-kw">None</span>
+    <span class="c-kw">if</span> patch_latent <span class="c-kw">is not</span> <span class="c-kw">None</span>:
+        patcher <span class="c-com">=</span> SAEFeaturePatcher(
+            sae, patch_latent, block, target_step<span class="c-com">=</span>step_index,
+            mode<span class="c-com">=</span><span class="c-str">"ablate"</span> <span class="c-kw">if</span> mode <span class="c-com">!=</span> <span class="c-str">"amplify"</span> <span class="c-kw">else</span> <span class="c-str">"amplify"</span>,
+            factor<span class="c-com">=</span>3.0, do_cfg<span class="c-com">=</span><span class="c-kw">True</span>,
+        )
+    result <span class="c-com">=</span> extractor.extract(prompt, generator<span class="c-com">=</span>generator, patcher<span class="c-com">=</span>patcher)
+    <span class="c-kw">if</span> patcher <span class="c-kw">is not</span> <span class="c-kw">None</span>:
+        <span class="c-kw">assert</span> patcher.applied  <span class="c-com"># the hook really fired, not a silent no-op</span>
+    <span class="c-kw">return</span> result[<span class="c-str">"image"</span>]</pre>
+    </div>
+    <p class="prose" style="max-width:640px;color:var(--ink-dim);margin-top:16px;">
+      The <code>assert patcher.applied</code> matters more than it looks: it's the guard against the single
+      most likely failure mode of this whole approach &mdash; a <code>block_name</code> or <code>target_step</code>
+      typo that makes the hook attach but never actually match, silently producing four identical images that
+      would look like a "successful" but meaningless test.
+    </p>
+  </section>
+
+  <!-- ================= SCORING ================= -->
+  <section>
+    <div class="section-head"><span class="section-num">&sect;3</span><h2>Scoring: a proxy, not the real metric yet</h2></div>
+    <div class="prose">
+      <p>
+        The numbers under each image above are <strong>mean absolute pixel difference</strong> against
+        baseline &mdash; not the LPIPS-based specificity score the full protocol calls for. LPIPS isn't wired
+        into this environment yet; raw pixel difference was enough to answer the one question this smoke test
+        needed to answer (does the patch causally move the image at all, and by how much relative to a
+        control), without blocking on an extra dependency install first.
+      </p>
+      <p>
+        <code>local</code> is the mean difference inside a circular mask centered on the row's own
+        <code>(centroid_x, centroid_y)</code>; <code>global</code> is the mean difference over the whole
+        frame. Both are on the raw 0&ndash;255 pixel scale, which is why they're directly comparable across
+        rows in the table below.
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>condition</th><th>local &Delta;</th><th>global &Delta;</th><th>local / global</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td class="mono">ablate (real latent)</td><td class="num">57.26</td><td class="num">46.00</td><td class="num">1.24</td></tr>
+          <tr class="hl"><td class="mono">amplify (real latent)</td><td class="num">67.30</td><td class="num">46.95</td><td class="num">1.43</td></tr>
+          <tr><td class="mono">control (unrelated latent)</td><td class="num">1.95</td><td class="num">1.31</td><td class="num">1.49</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= FINDINGS ================= -->
+  <section>
+    <div class="section-head"><span class="section-num">&sect;4</span><h2>What the numbers and the images actually say</h2></div>
+
+    <div class="finding">
+      <div class="finding-num">01</div>
+      <div>
+        <h3>The real/control gap is the headline result, and it's large</h3>
+        <p>
+          Ablating or amplifying latent 616 moved the image by 46&ndash;67 (mean abs pixel diff); doing the
+          identical procedure on latent 3155 moved it by 1.3&ndash;2.0. That's a 25&ndash;35&times; gap on a
+          single sample &mdash; exactly the signature &sect;4 of the protocol predicted for a latent that's a
+          real causal handle on the model, versus one that isn't.
+        </p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-num">02</div>
+      <div>
+        <h3>This latent encodes texture, not an object</h3>
+        <p>
+          Look at the ablated/amplified panels: a periodic vertical-banding pattern appears and strengthens
+          with the intervention, while the basketball-team composition holds. Latent 616 at block 12 isn't
+          "the concept of a team" in any nameable sense &mdash; it looks like a fine-grained texture/moir&eacute;
+          channel. That's not a failure of the test; it's exactly the kind of thing causal intervention
+          reveals that a spatial-correlation argmax can't: <em>what</em> a latent actually does, not just
+          where it lines up.
+        </p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-num">03</div>
+      <div>
+        <h3>The local/global ratio wasn't informative here &mdash; and that's diagnostic too</h3>
+        <p>
+          All three ratios land in a narrow 1.2&ndash;1.5 band, real latents included, because this row's
+          <code>step_index</code> is 0: the very first denoising step, where the model is still laying down
+          coarse global structure. An intervention there cascades through every later step and changes the
+          <em>whole</em> image, not a masked region &mdash; so global &Delta; grows right alongside local
+          &Delta;, and the ratio stops being a useful specificity signal. Magnitude (finding 01) still cuts
+          through cleanly; specificity should be expected to work better at late-timestep rows, where
+          denoising is refining local detail rather than composing structure.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Design implication for the full study:</strong> <code>run_ablation.py</code>'s candidate sampling
+      should stratify across timestep_fraction &mdash; not just take the highest-<code>concentration</code>
+      rows regardless of timestep, which today would skew toward early, globally-cascading steps like this
+      one and under-test the late-step, plausibly more spatially-specific cases the local/global scorer is
+      actually designed for.
+    </div>
+  </section>
+
+  <!-- ================= STATUS ================= -->
+  <section>
+    <div class="section-head"><span class="section-num">&sect;5</span><h2>What this does &mdash; and doesn't &mdash; prove yet</h2></div>
+    <div class="prose">
+      <p>
+        This confirms the mechanism: <code>SAEFeaturePatcher</code> attaches, fires at exactly the right
+        (block, step), and produces a real, large, latent-specific causal effect. It is <strong>N=1</strong>
+        &mdash; one row, one model, one timestep. None of the statistical machinery in
+        <a href="#" style="color:var(--sufficiency);">&sect;5 of the protocol</a> (paired Wilcoxon test,
+        effect size across hundreds of candidates) has run yet, because it can't: that needs the real
+        scorer and the orchestration loop, neither of which exist yet.
+      </p>
+    </div>
+    <div class="checklist">
+      <div class="check-item">
+        <svg width="18" height="18" viewBox="0 0 18 18"><rect x="1" y="1" width="16" height="16" rx="3" fill="none" stroke="var(--ink-faint)"></rect></svg>
+        <div><strong>specificity()</strong> <span class="desc">&mdash; swap mean-abs-diff for real LPIPS, needs the package installed in <code>flux_iso</code></span></div>
+      </div>
+      <div class="check-item">
+        <svg width="18" height="18" viewBox="0 0 18 18"><rect x="1" y="1" width="16" height="16" rx="3" fill="none" stroke="var(--ink-faint)"></rect></svg>
+        <div><strong>run_ablation.py</strong> <span class="desc">&mdash; candidate sampling (timestep-stratified, per finding 03) + the 4-generation loop + resumable CSV, both models</span></div>
+      </div>
+      <div class="check-item">
+        <svg width="18" height="18" viewBox="0 0 18 18"><rect x="1" y="1" width="16" height="16" rx="3" fill="none" stroke="var(--ink-faint)"></rect></svg>
+        <div><strong>analyze_ablation.py</strong> <span class="desc">&mdash; the paired Wilcoxon test + effect size, once real / control pairs exist at scale</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>akshat_ICLR &middot; writeups/ablation_smoke_test.html &middot; smoke_test_ablation.py, run on .83, PixArt-XL-2-1024-MS</footer>
+
+</div>
