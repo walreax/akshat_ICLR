@@ -27,14 +27,6 @@ sd_activations/
 sae_checkpoints_uploaded/
 sae_checkpoints_4200/
 sae_checkpoints_provided/
-sae_concept_eval/concept_metrics.csv
-sae_concept_eval/concept_metrics.json
-sae_concept_eval/images/
-sae_concept_eval/heatmaps/
-sae_concept_eval1/concept_metrics.csv
-sae_concept_eval1/concept_metrics.json
-sae_concept_eval1/images/
-sae_concept_eval1/heatmaps/
 
 # In-progress remote extraction runs (large .npz latent dumps, not finalized)
 cfs_*_calib/

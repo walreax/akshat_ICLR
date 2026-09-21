@@ -82,7 +82,12 @@ def initialize_session_state():
     """
 
     defaults = {
-        "annotator_id": "",
+        # Auto-generate a unique id per browser session so a public
+        # visitor never has to type anything to get a working,
+        # non-colliding identity. They can still overwrite it in the
+        # sidebar with their own memorable id if they want their
+        # progress to be recognized across separate visits.
+        "annotator_id": f"guest_{uuid.uuid4().hex[:8]}",
         "evaluation_order": [],
         "current_position": 0,
         "responses": {},
@@ -879,8 +884,10 @@ st.sidebar.title(
 st.sidebar.text_input(
     "Annotator ID",
     key="annotator_id",
-    placeholder="Enter your ID",
-    help="Use a unique identifier for your evaluation session.",
+    help=(
+        "A unique id was generated for you automatically. Replace it "
+        "with your own if you want to be recognized on a return visit."
+    ),
 )
 
 
