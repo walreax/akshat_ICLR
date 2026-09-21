@@ -8,6 +8,7 @@ from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 # ============================================================
@@ -792,25 +793,49 @@ st.markdown(
     """
     <style>
 
-    .main-title {
-        font-size: 2.0rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
+    /* Tighten Streamlit's own top/bottom page padding so the whole
+       rating task -- text, image, scores, submit -- fits on one
+       laptop screen without scrolling the page itself. */
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1rem !important;
     }
 
+    .main-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.1rem;
+    }
+
+    /* Long poems/stories get their OWN internal scrollbar instead of
+       growing the page -- that's the difference between "this one
+       box scrolls" (fine) and "the whole page scrolls" (what we're
+       avoiding). */
     .prompt-box {
-        padding: 1rem;
+        padding: 0.65rem 0.85rem;
         border-radius: 8px;
         border: 1px solid #444;
-        margin-bottom: 1rem;
-        line-height: 1.6;
+        line-height: 1.45;
+        font-size: 0.82rem;
+        max-height: 300px;
+        overflow-y: auto;
     }
 
-    .evaluation-note {
-        padding: 0.8rem;
-        border-radius: 8px;
-        background-color: rgba(100, 100, 100, 0.12);
-        margin-bottom: 1rem;
+    /* Cap the generated image's rendered height the same way, so a
+       tall image can't push the score row below the fold. */
+    div[data-testid="stImage"] img {
+        max-height: 300px;
+        width: auto;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* Compact vertical rhythm between the stacked widgets in each
+       score column (label / slider / number box). */
+    div[data-testid="stVerticalBlock"] div[data-testid="stSlider"],
+    div[data-testid="stVerticalBlock"] div[data-testid="stNumberInput"] {
+        margin-bottom: -0.6rem;
     }
 
     </style>
@@ -959,13 +984,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
-st.markdown(
-    """
-    Please evaluate the generated image with respect to the
-    given creative text. The model identity is intentionally
-    hidden during evaluation.
-    """
+st.caption(
+    "Rate the image against the text. Model identity is hidden."
 )
 
 
@@ -1037,47 +1057,33 @@ prompt = current_item["prompt"]
 
 image_path = current_item["image_path"]
 
+# First time this particular item has been rendered (a fresh image,
+# not just a rerun triggered by editing one of its own score boxes)
+# -> auto-focus the first score box so a fully keyboard-driven rater
+# never has to reach for the mouse: type, Enter, type, Enter, ...,
+# Enter to submit, and the next image starts already focused too.
+if st.session_state.get("__last_item_for_focus") != item_id:
+    st.session_state["__focus_next_axis_index"] = 0
+    st.session_state["__last_item_for_focus"] = item_id
+
 
 # ============================================================
 # PROGRESS INFORMATION
 # ============================================================
 
-st.markdown(
-    f"""
-    **Evaluation {current_position + 1} of {total_items}**
-    """
-)
-
-st.markdown(
-    f"**Content type:** {content_type.capitalize()}"
+st.caption(
+    f"**Item {current_position + 1} / {total_items}**  ·  "
+    f"{content_type.capitalize()}"
 )
 
 
 # ============================================================
-# PROMPT
+# PROMPT + IMAGE, SIDE BY SIDE
 # ============================================================
-
-st.markdown(
-    "### Creative Text"
-)
-
-st.markdown(
-    f"""
-    <div class="prompt-box">
-    {prompt}
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-
-# ============================================================
-# IMAGE
-# ============================================================
-
-st.markdown(
-    "### Generated Image"
-)
+# Side by side instead of stacked so both are visible together
+# without scrolling; the prompt box scrolls internally if the text
+# is long rather than pushing the image (and the scores below it)
+# further down the page.
 
 if not os.path.exists(image_path):
 
@@ -1087,34 +1093,34 @@ if not os.path.exists(image_path):
 
     st.stop()
 
+text_col, image_col = st.columns([1, 1])
 
-st.image(
-    image_path,
-    use_container_width=True,
-)
+with text_col:
+
+    st.markdown(
+        f"""
+        <div class="prompt-box">
+        {prompt}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with image_col:
+
+    st.image(
+        image_path,
+        use_container_width=True,
+    )
 
 
 # ============================================================
 # EVALUATION INSTRUCTIONS
 # ============================================================
 
-st.markdown(
-    """
-    <div class="evaluation-note">
-
-    <b>Scoring:</b> Use a value from 0 to 1 for each criterion.
-
-    <br><br>
-
-    <b>0</b> = completely unsatisfactory
-
-    <br>
-
-    <b>1</b> = completely satisfactory
-
-    </div>
-    """,
-    unsafe_allow_html=True,
+st.caption(
+    "Score 0 (completely unsatisfactory) to 1 (completely "
+    "satisfactory) for each criterion."
 )
 
 
@@ -1122,78 +1128,143 @@ st.markdown(
 # EVALUATION FORM
 # ============================================================
 
-# Use a form so sliders do not trigger submission/rerun
-# until the evaluator explicitly presses Submit.
+# NOT wrapped in st.form(): each axis is a slider PLUS a paired
+# number_input so an evaluator can either drag or type an exact score.
+# Streamlit only live-syncs two widgets to one value via on_change
+# callbacks, and callbacks inside a form don't fire until submit -- so
+# keeping the slider and the number box in sync requires living
+# outside the form. Keys are item_id-specific so a new image always
+# starts both widgets fresh at the 0.50 default, instead of carrying
+# over whatever the previous image was set to.
 
-with st.form(
-    key=f"evaluation_form_{item_id}"
-):
+st.markdown(
+    "**Evaluation Criteria**"
+)
 
-    st.markdown(
-        "### Evaluation Criteria"
+
+def _sync_from_slider(state_key):
+    st.session_state[f"{state_key}__num"] = st.session_state[f"{state_key}__slider"]
+
+
+def _sync_from_number(state_key, axis_index):
+    st.session_state[f"{state_key}__slider"] = st.session_state[f"{state_key}__num"]
+    # Enter (or tab-out) on a number box commits the value and reruns the
+    # whole app, which rebuilds the DOM and drops focus. Remember which
+    # box triggered it so a script after the loop can refocus the NEXT
+    # box (or the Submit button, past the last axis) once rendering
+    # settles -- that's what makes Enter feel like it "advances".
+    st.session_state["__focus_next_axis_index"] = axis_index + 1
+
+
+AXIS_HELP = {
+    "Semantic Fidelity": (
+        "How faithfully does the image represent "
+        "the meaning and content of the text?"
+    ),
+    "Attribute Presence": (
+        "Are the important entities, attributes, "
+        "objects, or concepts specified in the text "
+        "present in the image?"
+    ),
+    "Compositional Correctness": (
+        "Are relationships between objects, entities, "
+        "and attributes represented correctly?"
+    ),
+    "Narrative Fidelity": (
+        "For stories/poems, how well does the image "
+        "capture the overall narrative or scene?"
+    ),
+}
+
+scores = {}
+
+# One column per axis, side by side, instead of one row per axis --
+# all four are visible and editable at once without scrolling between
+# them, which is the whole point when rating hundreds of images.
+axis_columns = st.columns(len(EVALUATION_AXES))
+
+for axis_index, (axis, col) in enumerate(zip(EVALUATION_AXES, axis_columns)):
+
+    axis_slug = axis.lower().replace(" ", "_")
+
+    state_key = f"score_{item_id}_{axis_slug}"
+
+    if f"{state_key}__slider" not in st.session_state:
+        st.session_state[f"{state_key}__slider"] = 0.50
+
+    if f"{state_key}__num" not in st.session_state:
+        st.session_state[f"{state_key}__num"] = 0.50
+
+    with col:
+
+        st.markdown(f"**{axis}** :grey_question:", help=AXIS_HELP[axis])
+
+        st.slider(
+            axis,
+            min_value=SLIDER_MIN,
+            max_value=SLIDER_MAX,
+            step=SLIDER_STEP,
+            key=f"{state_key}__slider",
+            label_visibility="collapsed",
+            on_change=_sync_from_slider,
+            args=(state_key,),
+        )
+
+        st.number_input(
+            axis,
+            min_value=SLIDER_MIN,
+            max_value=SLIDER_MAX,
+            step=SLIDER_STEP,
+            key=f"{state_key}__num",
+            label_visibility="collapsed",
+            on_change=_sync_from_number,
+            args=(state_key, axis_index),
+        )
+
+    scores[axis] = st.session_state[f"{state_key}__num"]
+
+
+# Enter-to-advance: focus the next number box (or the Submit button,
+# after the last axis) once the page has finished re-rendering from
+# the value-commit rerun. Runs inside a hidden components.v1.html
+# iframe, so it reaches into the real page via window.parent.
+_focus_target = st.session_state.pop("__focus_next_axis_index", None)
+
+if _focus_target is not None:
+
+    components.html(
+        f"""
+        <script>
+        setTimeout(function() {{
+            const doc = window.parent.document;
+            const inputs = doc.querySelectorAll(
+                'div[data-testid="stNumberInput"] input'
+            );
+            const target = {_focus_target};
+            if (target < inputs.length) {{
+                inputs[target].focus();
+                inputs[target].select();
+            }} else {{
+                const buttons = Array.from(doc.querySelectorAll('button'));
+                const submitBtn = buttons.find(
+                    (b) => b.textContent.trim() === 'Submit Evaluation'
+                );
+                if (submitBtn) {{
+                    submitBtn.focus();
+                }}
+            }}
+        }}, 120);
+        </script>
+        """,
+        height=0,
     )
 
-    scores = {}
 
-    scores["Semantic Fidelity"] = st.slider(
-        "Semantic Fidelity",
-        min_value=SLIDER_MIN,
-        max_value=SLIDER_MAX,
-        value=0.50,
-        step=SLIDER_STEP,
-        help=(
-            "How faithfully does the image represent "
-            "the meaning and content of the text?"
-        ),
-    )
-
-    scores["Attribute Presence"] = st.slider(
-        "Attribute Presence",
-        min_value=SLIDER_MIN,
-        max_value=SLIDER_MAX,
-        value=0.50,
-        step=SLIDER_STEP,
-        help=(
-            "Are the important entities, attributes, "
-            "objects, or concepts specified in the text "
-            "present in the image?"
-        ),
-    )
-
-    scores["Compositional Correctness"] = st.slider(
-        "Compositional Correctness",
-        min_value=SLIDER_MIN,
-        max_value=SLIDER_MAX,
-        value=0.50,
-        step=SLIDER_STEP,
-        help=(
-            "Are relationships between objects, entities, "
-            "and attributes represented correctly?"
-        ),
-    )
-
-    scores["Narrative Fidelity"] = st.slider(
-        "Narrative Fidelity",
-        min_value=SLIDER_MIN,
-        max_value=SLIDER_MAX,
-        value=0.50,
-        step=SLIDER_STEP,
-        help=(
-            "For stories/poems, how well does the image "
-            "capture the overall narrative or scene?"
-        ),
-    )
-
-    reviewed_confirmation = st.checkbox(
-        "I looked at the image and set these scores intentionally "
-        "(not left at the default).",
-    )
-
-    submitted = st.form_submit_button(
-        "Submit Evaluation",
-        type="primary",
-        use_container_width=True,
-    )
+submitted = st.button(
+    "Submit Evaluation",
+    type="primary",
+    use_container_width=True,
+)
 
 
 # ============================================================
@@ -1201,22 +1272,6 @@ with st.form(
 # ============================================================
 
 if submitted:
-
-    # --------------------------------------------------------
-    # Require the explicit "I actually rated this" confirmation,
-    # since every slider defaults to 0.50 and Streamlit forms give
-    # no way to tell "left at default" apart from "genuinely neutral".
-    # --------------------------------------------------------
-
-    if not reviewed_confirmation:
-
-        st.error(
-            "Please check the confirmation box to submit -- this "
-            "prevents accidental submissions at the default (0.50) "
-            "score on every axis."
-        )
-
-        st.stop()
 
     # --------------------------------------------------------
     # Validate scores
