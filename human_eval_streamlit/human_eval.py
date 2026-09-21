@@ -69,6 +69,60 @@ st.set_page_config(
 
 
 # ============================================================
+# LIVE DASHBOARD (?view=dashboard) -- a read-only status page,
+# entirely separate from the rating flow below. Reuses this same
+# public tunnel/URL instead of needing a second one.
+# ============================================================
+
+if st.query_params.get("view") == "dashboard":
+
+    DASH_PRE_FIX_IDS = {"1", "2", "12", "239492", "2204", "2001", "2002", "7564995"}
+    # guest_898a8ec3: 116 rows in 16.5 minutes, median 5s apart -- confirmed
+    # bot/spam (see the rate limit further down in this file).
+    DASH_BOT_IDS = {"guest_898a8ec3"}
+    DASH_EXCLUDE_IDS = DASH_PRE_FIX_IDS | DASH_BOT_IDS
+
+    st.markdown(
+        '<meta http-equiv="refresh" content="5">',
+        unsafe_allow_html=True,
+    )
+
+    st.title("📊 Human Evaluation -- Live Status")
+    st.caption(f"Auto-refreshing every 5s -- last loaded {datetime.now().strftime('%H:%M:%S')}")
+
+    try:
+        dash_df = pd.read_csv(RESULTS_CSV)
+        dash_df["annotator_id"] = dash_df["annotator_id"].astype(str)
+        dash_valid = dash_df[~dash_df["annotator_id"].isin(DASH_EXCLUDE_IDS)].sort_values("timestamp")
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Valid ratings", len(dash_valid))
+        c2.metric("Annotators", dash_valid["annotator_id"].nunique())
+        c3.metric("Excluded (bot / pre-fix)", len(dash_df) - len(dash_valid))
+        c4.metric("Total rows", len(dash_df))
+
+        st.subheader("By annotator")
+        st.dataframe(
+            dash_valid["annotator_id"].value_counts().rename("rows"),
+            use_container_width=True,
+        )
+
+        st.subheader("Most recent")
+        st.dataframe(
+            dash_valid.tail(8).iloc[::-1][
+                ["timestamp", "annotator_id", "item_id", "human_overall"]
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    except FileNotFoundError:
+        st.info("No results file yet -- no ratings submitted.")
+
+    st.stop()
+
+
+# ============================================================
 # SESSION STATE INITIALIZATION
 # IMPORTANT: THIS MUST RUN BEFORE ANY SESSION-STATE ACCESS
 # ============================================================
