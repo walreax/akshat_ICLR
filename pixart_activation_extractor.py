@@ -28,7 +28,7 @@ import argparse
 import gc
 import json
 import os
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
@@ -70,21 +70,31 @@ class PixArtInternalsExtractor:
                 capture_blocks: bool = False, capture_attention: bool = False,
                 block_names: Optional[List[str]] = None,
                 attn_layer_names=None, heatmap_size: int = 32, keep_heads: bool = False,
-                block_step_stride: int = 1, generator=None,
+                block_step_stride: int = 1, block_target_steps: Optional[Iterable[int]] = None,
+                generator=None,
                 patcher: Optional["SAEFeaturePatcher"] = None) -> Dict:
         self.block_extractor.clear()
         self.block_extractor.step_stride = max(1, block_step_stride)
+        self.block_extractor.target_steps = (
+            set(block_target_steps) if block_target_steps is not None else None)
         if block_names is not None:
             self.block_extractor.block_names = block_names
 
-        def step_callback(pipe, step_index, timestep, callback_kwargs):
+        # This diffusers version's PixArtAlphaPipeline.__call__ has no
+        # callback_on_step_end parameter at all (checked the installed
+        # source directly: only the old callback(step_index, timestep,
+        # latents) + callback_steps API exists). Passing callback_on_step_end
+        # doesn't raise -- it's silently swallowed -- so step_callback never
+        # fires, self.block_extractor._step never leaves 0, and every
+        # requested step other than 0 is permanently absent from
+        # block_activations. Using the old-style callback here instead.
+        def step_callback(step_index, timestep, latents):
             # +1: callback fires AFTER step_index's forward pass already ran
             # using the previous step's number -- see the identical fix and
             # full trace in sd_activation_extractor.py's SD3InternalsExtractor.
             self.block_extractor.set_step(step_index + 1)
             if patcher is not None:
                 patcher.set_step(step_index + 1)
-            return callback_kwargs
 
         if capture_blocks:
             self.block_extractor.attach()
@@ -99,7 +109,8 @@ class PixArtInternalsExtractor:
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
                 generator=generator,
-                callback_on_step_end=step_callback,
+                callback=step_callback,
+                callback_steps=1,
             )
             image = out.images[0]
         finally:

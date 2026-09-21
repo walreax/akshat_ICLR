@@ -52,3 +52,12 @@ Thumbs.db
 
 # Claude Code session/tooling config (local machine state, not project source)
 .claude/
+
+# Scratch pulls / one-off debug scripts / analysis dumps (not project source)
+scratch_pull_599/
+scratch_repro_*.py
+scratch_url_failure.txt
+
+# Raw human-annotator data (real participant judgments -- not for the code repo)
+scratch_human_results.csv
+scratch_human_aggregated.csv

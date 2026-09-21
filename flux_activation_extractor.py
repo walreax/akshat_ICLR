@@ -13,7 +13,8 @@ heuristic bugfixed there for datasets with always-populated metadata
 columns), the L1-penalty `SparseAutoencoder` + `train_sae`, resumable
 `IncrementalCSVWriter` / `load_existing_results`, `ProgressTracker`,
 `heatmap_centroid` / `attention_concentration` / `save_heatmap_overlay`,
-`sae_concept_heatmap`, `summarize_centroid_alignment`.
+`sae_concept_heatmap`, `summarize_centroid_alignment`,
+`summarize_temporal_deviation_trajectory`.
 
 WHAT'S DIFFERENT, AND WHY:
 
@@ -39,17 +40,37 @@ WHAT'S DIFFERENT, AND WHY:
    flux_sae.py's BlockDeltaRecorder docstring for the version history this
    handles.
 
-3. One SAE per (block, timestep) cell, not per block. The base script
-   trains one SAE per block, pooling activations from every captured
-   denoising step, then reuses that same SAE across all evaluated
-   timesteps. Here we want a genuine grid (4 blocks x 4 timesteps = 16
-   SAEs, matching flux_sae.py's paper-accurate per-(block,timestep)
-   design), so training activations are collected and pooled separately
-   per (block, timestep) cell instead. FLUX-schnell's distilled schedule
-   is only NUM_INFERENCE_STEPS=4 steps total, and the 4 default timestep
-   fractions (0.0, 0.33, 0.67, 1.0) land on every single one of them --
-   full trajectory coverage, no stride/subsampling needed (unlike SD3's
-   28-step schedule, which needs `--train-timestep-stride`).
+3. One SAE per block, shared across all timesteps -- NOT one per
+   (block, timestep) cell. An earlier version of this file trained an
+   independent SAE per (block, timestep) cell (4 blocks x 4 timesteps = 16
+   SAEs), matching flux_sae.py's paper-accurate per-(block,timestep)
+   design for THAT separate experiment. This script now matches
+   sd_activation_extractor.py's SD3 pattern instead: activations are
+   pooled across every captured denoising step and used to train ONE SAE
+   per block, which is then reused to encode every evaluated timestep.
+   Reasons for the switch:
+     (a) Latent identity becomes comparable ACROSS timesteps within a
+         block -- latent 3118 at t=0.33 and latent 3118 at t=0.67 are now
+         the same feature direction, which per-cell SAEs could never
+         guarantee. This is what makes `summarize_temporal_deviation_
+         trajectory` meaningful for FLUX (previously it would have been
+         comparing unrelated latent spaces and silently produced garbage).
+     (b) 4x fewer SAEs to train (4 vs 16 for the default block selection),
+         and each one now trains on ~4x more pooled data -- fewer
+         undertrained/dead latents in the d_hidden=4096 dictionary.
+     (c) The trade-off: a per-timestep SAE can in principle isolate a
+         concept feature more sharply AT that timestep than a
+         pooled-then-shared SAE can (the shared SAE's latent may blend
+         "how this concept looks in noisy activations" with "how it looks
+         in clean ones"). If per-timestep sharpness turns out to matter
+         more than temporal comparability for a given analysis, the
+         previous per-cell grid design is still what flux_sae.py uses for
+         its separate, paper-accurate experiment -- this file no longer
+         duplicates that design, it defers to sd_activation_extractor.py's
+         SD3-matching pattern instead.
+   FLUX-schnell's distilled schedule is only NUM_INFERENCE_STEPS=4 steps
+   total, so "pooled across every captured step" here means all 4 steps,
+   same as before -- no stride/subsampling is introduced by this change.
 
 4. No `--mode interpret` / no attention-map capture. FLUX's attention
    mechanism differs from SD3's separate add_q_proj/add_k_proj processor,
@@ -62,20 +83,24 @@ WHAT'S DIFFERENT, AND WHY:
    dimension to select out of -- generation batch size is always 1.
 
 Everything else -- CSV schema, resumability, progress reporting,
-heatmap-sampling, centroid-alignment summary -- is identical to the base
-script by construction, since it's the same imported code.
+heatmap-sampling, centroid-alignment summary, temporal-deviation
+trajectory -- is identical to the base script by construction, since it's
+the same imported code.
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import gc
+import hashlib
 import json
 import os
 import shutil
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -98,7 +123,50 @@ from sd_activation_extractor import (
     save_heatmap_overlay,
     sae_concept_heatmap,
     summarize_centroid_alignment,
+    summarize_temporal_deviation_trajectory,
 )
+
+
+# ============================================================
+# 0. --save-latents support -- NOT present in this machine's copy of
+# sd_activation_extractor.py (verified: no summarize_latents/latents_dir/
+# --save-latents anywhere in it, unlike the newer copy this project uses
+# elsewhere), so it's added here, self-contained, rather than editing the
+# shared module (avoids any risk to pixart_activation_extractor.py, which
+# also imports from that shared file). Ports the identical logic/format
+# used elsewhere in this project: for every (concept, seed), save the mean
+# activation of every SAE latent plus the top-k latents' spatial maps, per
+# (block, timestep) -- the raw material an entropy-based concentration
+# score (A_l = 1 - H(map)/H_max) needs, since that needs the actual spatial
+# distribution, not just the single precomputed variance-based
+# `concentration` scalar already in concept_metrics.csv.
+# ============================================================
+
+def _latent_filename(concept_id: str, seed: int) -> str:
+    digest = hashlib.md5(str(concept_id).encode()).hexdigest()[:8]
+    return f"{_slug(concept_id)}_{digest}_seed{seed}.npz"
+
+
+def summarize_latents(sae: "SparseAutoencoder", block_activation_img: torch.Tensor,
+                       top_k: int = 64, map_size: int = 32) -> Dict[str, np.ndarray]:
+    device = next(sae.parameters()).device
+    with torch.no_grad():
+        codes = sae.encode(block_activation_img.to(device).float())   # (N_img, d_hidden)
+        mean_vec = codes.mean(dim=0)
+        n_img = codes.shape[0]
+        side = int(round(n_img ** 0.5))
+        k = min(top_k, codes.shape[1])
+        top_idx = mean_vec.topk(k).indices
+        out = {
+            "mean": mean_vec.to(torch.float16).cpu().numpy(),
+            "top_idx": top_idx.to(torch.int32).cpu().numpy(),
+            "l0": (codes > 0).float().sum(dim=1).mean().item(),
+        }
+        if side * side == n_img:
+            maps = codes[:, top_idx].T.reshape(1, k, side, side)
+            maps = F.interpolate(maps, size=(map_size, map_size), mode="bilinear", align_corners=False)[0]
+            out["maps"] = maps.to(torch.float16).cpu().numpy()          # (k, map_size, map_size)
+    return out
 
 
 # ============================================================
@@ -330,37 +398,38 @@ def probe_block_dim(extractor: "FluxInternalsExtractor", block_name: str) -> int
 
 
 # ============================================================
-# 4. Collecting activations + training the (block, timestep) SAE grid
+# 4. Collecting activations + training ONE SAE PER BLOCK
+#    (pooled across timesteps -- see docstring point 3 above)
 # ============================================================
 
-def collect_block_activations_grid(extractor: FluxInternalsExtractor, dataset: List[Dict[str, str]],
-                                    block_names: List[str], target_steps: set, cache_dir: str,
-                                    seeds=(42,), num_inference_steps: int = 4, guidance_scale: float = 0.0,
-                                    max_tokens_per_cell: int = 200_000) -> None:
+def collect_block_activations(extractor: FluxInternalsExtractor, dataset: List[Dict[str, str]],
+                               block_names: List[str], cache_dir: str, seeds=(42,),
+                               num_inference_steps: int = 4, guidance_scale: float = 0.0,
+                               max_tokens_per_block: int = 200_000) -> None:
     """
-    Runs generation for every (prompt, seed), capturing image-token
-    activations for every block in `block_names` at every step in
-    `target_steps` -- a single generation contributes to ALL (block, step)
-    cells at once. Stops once every cell has reached `max_tokens_per_cell`.
+    FLUX analog of sd_activation_extractor.py's `collect_block_activations`,
+    now pooling activations from every captured denoising step into ONE
+    per-block training pool -- not a separate pool per (block, timestep)
+    cell like the earlier version of this file used. See the module
+    docstring's point 3 for why.
 
-    Rather than pooling every generation's activations in memory (which
-    grows linearly with how many prompts have been processed -- at the
-    default budget that's ~1.2GB per cell, ~20GB across all 16 FLUX cells,
-    ON TOP OF the model's own resident memory -- confirmed via dmesg as
-    what actually OOM-killed this pipeline once the model-loading OOM
-    itself was separately fixed via int8 quantization), each generation's
-    per-cell tensor is written straight to its own small file under
-    `cache_dir` and dropped from memory immediately. `train_saes_grid`
-    reads a cell's files back in only when it's that cell's turn to train,
-    so peak RAM only ever holds one cell's data at a time, not all 16.
+    Still writes each generation's per-block tensor straight to its own
+    small file under `cache_dir` and drops it from memory immediately,
+    rather than accumulating everything in a Python list, for the same
+    reason the earlier per-cell version did this: this project confirmed
+    via dmesg that pooling activations for multiple blocks/cells in memory
+    is what OOM-killed this pipeline once the model-loading OOM was
+    separately fixed via int8 quantization. Going from 16 (block, timestep)
+    cells down to (typically) 4 blocks cuts that risk roughly 4x, but
+    doesn't eliminate it, and the disk-caching pattern costs nothing to
+    keep -- so it stays.
     """
-    counts: Dict[Tuple[str, int], int] = defaultdict(int)
-    cells = [(b, s) for b in block_names for s in target_steps]
-    for b, s in cells:
-        os.makedirs(os.path.join(cache_dir, f"{b}__t{s}"), exist_ok=True)
+    counts: Dict[str, int] = defaultdict(int)
+    for b in block_names:
+        os.makedirs(os.path.join(cache_dir, b), exist_ok=True)
 
     def all_full() -> bool:
-        return all(counts[c] >= max_tokens_per_cell for c in cells)
+        return all(counts[b] >= max_tokens_per_block for b in block_names)
 
     total_pairs = len(dataset) * len(seeds)
     tracker = ProgressTracker(total_pairs, label="collection pairs",
@@ -369,7 +438,7 @@ def collect_block_activations_grid(extractor: FluxInternalsExtractor, dataset: L
     file_idx = 0
     for item in dataset:
         if all_full():
-            print("  [collect_block_activations_grid] token budget reached for all cells, stopping early.")
+            print("  [collect_block_activations] token budget reached for all blocks, stopping early.")
             break
         for seed in seeds:
             if all_full():
@@ -380,73 +449,79 @@ def collect_block_activations_grid(extractor: FluxInternalsExtractor, dataset: L
                 capture_blocks=True, block_names=block_names, generator=generator,
             )
             for b in block_names:
-                for step, act in result["block_activations"].get(b, {}).items():
-                    key = (b, step)
-                    if step not in target_steps or counts[key] >= max_tokens_per_cell:
-                        continue
-                    cond = select_conditional_batch(act)  # (N_img, d_in)
-                    cell_dir = os.path.join(cache_dir, f"{b}__t{step}")
-                    torch.save(cond, os.path.join(cell_dir, f"{file_idx:06d}.pt"))
-                    counts[key] += cond.shape[0]
+                if counts[b] >= max_tokens_per_block:
+                    continue
+                per_step = result["block_activations"].get(b, {})
+                if not per_step:
+                    continue
+                # Pool every captured step's image-token activations for
+                # this block into a single tensor before writing -- this is
+                # the actual "pooled across timesteps" step that replaces
+                # the old per-(block, timestep) cell split.
+                cond = torch.cat(
+                    [select_conditional_batch(act) for act in per_step.values()], dim=0
+                )
+                cell_dir = os.path.join(cache_dir, b)
+                torch.save(cond, os.path.join(cell_dir, f"{file_idx:06d}.pt"))
+                counts[b] += cond.shape[0]
             file_idx += 1
             tracker.step()
             gc.collect()
             torch.cuda.empty_cache()
 
 
-def load_cell_activations(cache_dir: str, block: str, step: int) -> Optional[torch.Tensor]:
-    cell_dir = os.path.join(cache_dir, f"{block}__t{step}")
-    if not os.path.isdir(cell_dir):
+def load_block_activations(cache_dir: str, block: str) -> Optional[torch.Tensor]:
+    block_dir = os.path.join(cache_dir, block)
+    if not os.path.isdir(block_dir):
         return None
-    files = sorted(os.listdir(cell_dir))
+    files = sorted(os.listdir(block_dir))
     if not files:
         return None
-    tensors = [torch.load(os.path.join(cell_dir, f)) for f in files]
+    tensors = [torch.load(os.path.join(block_dir, f)) for f in files]
     return torch.cat(tensors, dim=0)
 
 
-def train_saes_grid(extractor: FluxInternalsExtractor, dataset: List[Dict[str, str]],
-                     block_names: List[str], timestep_fractions: Tuple[float, ...], seeds=(42,),
-                     num_inference_steps: int = 4, guidance_scale: float = 0.0,
-                     max_tokens_per_cell: int = 200_000, d_hidden: int = 4096, l1_coeff: float = 1e-3,
-                     sae_epochs: int = 10, batch_size: int = 1024, lr: float = 1e-3,
-                     device: str = "cuda", save_dir: str = "./sae_checkpoints",
-                     cache_dir: Optional[str] = None, keep_cache: bool = False,
-                     ) -> Dict[Tuple[str, float], SparseAutoencoder]:
-    step_indices = sorted({int(round(f * (num_inference_steps - 1))) for f in timestep_fractions})
-    frac_by_step = {int(round(f * (num_inference_steps - 1))): f for f in timestep_fractions}
-    target_steps = set(step_indices)
+def train_saes_on_blocks(extractor: FluxInternalsExtractor, dataset: List[Dict[str, str]],
+                          block_names: List[str], seeds=(42,), num_inference_steps: int = 4,
+                          guidance_scale: float = 0.0, max_tokens_per_block: int = 200_000,
+                          d_hidden: int = 4096, l1_coeff: float = 1e-3, sae_epochs: int = 10,
+                          batch_size: int = 1024, lr: float = 1e-3, device: str = "cuda",
+                          save_dir: str = "./sae_checkpoints", cache_dir: Optional[str] = None,
+                          keep_cache: bool = False) -> Dict[str, SparseAutoencoder]:
+    """
+    FLUX analog of sd_activation_extractor.py's `train_sae_on_blocks`: one
+    SAE per block, trained on activations pooled across every captured
+    denoising step, then reused by `evaluate_concepts` to encode each
+    evaluated timestep separately. Replaces the earlier `train_saes_grid`
+    (one independent SAE per (block, timestep) cell) -- see the module
+    docstring's point 3 for the rationale and trade-offs.
+    """
     cache_dir = cache_dir or os.path.join(save_dir, "_activation_cache")
-
-    print(f"Collecting activations from {block_names} x steps {sorted(target_steps)} "
-          f"(fractions {timestep_fractions}) across {len(dataset)} prompt(s) x {len(seeds)} seed(s)...")
-    collect_block_activations_grid(
-        extractor, dataset, block_names, target_steps, cache_dir, seeds=seeds,
+    print(f"Collecting activations from {block_names}, pooled across all "
+          f"{num_inference_steps} denoising step(s), across {len(dataset)} prompt(s) "
+          f"x {len(seeds)} seed(s)...")
+    collect_block_activations(
+        extractor, dataset, block_names, cache_dir, seeds=seeds,
         num_inference_steps=num_inference_steps, guidance_scale=guidance_scale,
-        max_tokens_per_cell=max_tokens_per_cell,
+        max_tokens_per_block=max_tokens_per_block,
     )
 
     os.makedirs(save_dir, exist_ok=True)
-    saes: Dict[Tuple[str, float], SparseAutoencoder] = {}
+    saes: Dict[str, SparseAutoencoder] = {}
     for block in block_names:
-        for step in step_indices:
-            frac = frac_by_step[step]
-            acts = load_cell_activations(cache_dir, block, step)
-            if acts is None or acts.shape[0] == 0:
-                print(f"  [skip] no activations collected for {block} @ t={frac:.2f}")
-                continue
-            label = f"{block}/t{frac:.2f}"
-            print(f"\n  Training SAE for {label}  ({acts.shape[0]} tokens, d_in={acts.shape[1]})")
-            sae = train_sae(acts, d_hidden=d_hidden, l1_coeff=l1_coeff, epochs=sae_epochs,
-                             batch_size=batch_size, lr=lr, device=device)
-            saes[(block, frac)] = sae
-            torch.save(sae.state_dict(), os.path.join(save_dir, f"sae_{block}_t{frac:.2f}.pt"))
-            # Free this cell's activations (a fresh few-hundred-MB to ~1GB
-            # tensor per cell) before moving to the next one, rather than
-            # letting all 16 cells' worth pile up -- the exact accumulation
-            # pattern that caused the OOM this function now avoids.
-            del acts
-            gc.collect()
+        acts = load_block_activations(cache_dir, block)
+        if acts is None or acts.shape[0] == 0:
+            print(f"  [skip] no activations collected for {block}")
+            continue
+        print(f"\n  Training SAE for {block}  ({acts.shape[0]} tokens, d_in={acts.shape[1]})")
+        sae = train_sae(acts, d_hidden=d_hidden, l1_coeff=l1_coeff, epochs=sae_epochs,
+                         batch_size=batch_size, lr=lr, device=device)
+        saes[block] = sae
+        torch.save(sae.state_dict(), os.path.join(save_dir, f"sae_{block}.pt"))
+        # Free this block's activations before moving to the next one,
+        # rather than letting every block's pooled tensor pile up at once.
+        del acts
+        gc.collect()
     if not keep_cache:
         shutil.rmtree(cache_dir, ignore_errors=True)
     return saes
@@ -457,18 +532,20 @@ def train_saes_grid(extractor: FluxInternalsExtractor, dataset: List[Dict[str, s
 # ============================================================
 
 def evaluate_concepts(extractor: FluxInternalsExtractor, dataset: List[Dict[str, str]],
-                       saes: Dict[Tuple[str, float], SparseAutoencoder], block_names: List[str],
+                       saes: Dict[str, SparseAutoencoder], block_names: List[str],
                        seeds=(42, 45, 12, 1000), timestep_fractions=(0.0, 0.33, 0.67, 1.0),
                        num_inference_steps: int = 4, guidance_scale: float = 0.0,
                        heatmap_out_size: int = 64, out_dir: str = "./flux_sae",
                        save_heatmap_images: bool = True, heatmap_sample_rate: float = 1.0,
-                       resume: bool = False) -> List[Dict]:
+                       resume: bool = False, latents_dir: Optional[str] = None,
+                       latent_top_k: int = 64, latent_map_size: int = 32) -> List[Dict]:
     """
     For every concept x seed x requested timestep fraction x block: encodes
     that block's image-token activations at that timestep with its own
-    (block, timestep) SAE, finds the concept latent, builds its spatial
-    heatmap, and records the heatmap's centroid (x, y) and concentration
-    score. Identical row schema and incremental-write/resume behavior to
+    per-BLOCK SAE (now shared across all timesteps -- see module docstring
+    point 3), finds the concept latent, builds its spatial heatmap, and
+    records the heatmap's centroid (x, y) and concentration score.
+    Identical row schema and incremental-write/resume behavior to
     sd_activation_extractor.py's evaluate_concepts -- see that function's
     docstring for the full rationale.
     """
@@ -478,6 +555,8 @@ def evaluate_concepts(extractor: FluxInternalsExtractor, dataset: List[Dict[str,
     if save_heatmap_images:
         os.makedirs(images_dir, exist_ok=True)
         os.makedirs(heatmaps_dir, exist_ok=True)
+    if latents_dir is not None:
+        os.makedirs(latents_dir, exist_ok=True)
 
     step_indices = sorted({int(round(f * (num_inference_steps - 1))) for f in timestep_fractions})
     frac_by_step = {int(round(f * (num_inference_steps - 1))): f for f in timestep_fractions}
@@ -525,14 +604,17 @@ def evaluate_concepts(extractor: FluxInternalsExtractor, dataset: List[Dict[str,
                 if save_media:
                     image.save(os.path.join(images_dir, f"{concept_slug}_seed{seed}.png"))
 
+                latent_store: Dict[str, np.ndarray] = {}
                 for block in block_names:
                     block_slug = _slug(block)
                     per_step = result["block_activations"].get(block, {})
+                    sae = saes.get(block)  # one SAE per block, shared across all timesteps
+                    if sae is None:
+                        continue
                     for step in step_indices:
                         act = per_step.get(step)
                         frac = frac_by_step[step]
-                        sae = saes.get((block, frac))
-                        if act is None or sae is None:
+                        if act is None:
                             continue
                         cond = select_conditional_batch(act)
                         try:
@@ -562,6 +644,23 @@ def evaluate_concepts(extractor: FluxInternalsExtractor, dataset: List[Dict[str,
                         writer.write(row)
                         rows.append(row)
 
+                        if latents_dir is not None:
+                            summary = summarize_latents(sae, cond, top_k=latent_top_k,
+                                                        map_size=latent_map_size)
+                            prefix = f"{block_slug}|t{frac:.2f}|"
+                            for key, val in summary.items():
+                                latent_store[prefix + key] = val
+
+                # Latent file written BEFORE marking this pair "done" in the CSV's
+                # eyes (i.e. before moving on) -- a crash in between leaves an
+                # orphan .npz (harmless, overwritten on resume) rather than rows
+                # that --resume would treat as done with no latent file behind them.
+                if latents_dir is not None and latent_store:
+                    latent_file = _latent_filename(concept_id, seed)
+                    np.savez_compressed(os.path.join(latents_dir, latent_file), **latent_store)
+                    with open(os.path.join(latents_dir, "latents_index.csv"), "a", newline="") as f:
+                        csv.writer(f).writerow([concept_id, seed, latent_file])
+
                 tracker.step(extra=f"last: {concept_id[:30]!r} seed={seed}")
                 gc.collect()
                 torch.cuda.empty_cache()
@@ -583,11 +682,17 @@ def evaluate_concepts(extractor: FluxInternalsExtractor, dataset: List[Dict[str,
 
 def main():
     parser = argparse.ArgumentParser(
+        allow_abbrev=False,  # otherwise e.g. a stray "--mode sae" (this script has no
+                              # --mode flag -- only sd_activation_extractor.py does) silently
+                              # prefix-matches "--model-id" instead of erroring, quietly
+                              # setting model_id="sae" and failing confusingly much later.
         description="FLUX SAE-based concept centroid/concentration analysis across a "
                      "(block, timestep) grid, dataset, and seeds. Direct FLUX port of "
                      "sd_activation_extractor.py's --mode sae pipeline -- same output "
-                     "format (concept_metrics.csv/.json, centroid_alignment_summary.json). "
-                     "See the module docstring for what's different and why."
+                     "format (concept_metrics.csv/.json, centroid_alignment_summary.json, "
+                     "temporal_deviation_trajectory.json). See the module docstring for "
+                     "what's different and why -- notably, one SAE per block shared across "
+                     "all timesteps, matching the SD3 script's pattern."
     )
     parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.1-schnell")
     parser.add_argument("--steps", type=int, default=4)
@@ -611,19 +716,19 @@ def main():
                          help=f"Comma-separated FLUX block names. Choices: {', '.join(FLUX_BLOCK_NAMES)}.")
     parser.add_argument("--seeds", type=str, default="42,45,12,1000")
     parser.add_argument("--timesteps", type=str, default="0.0,0.33,0.67,1.0",
-                         help="Fractions of the denoising trajectory to train/evaluate a "
-                              "separate SAE at (0=first/noisiest step, 1=last/cleanest step). "
-                              "One SAE is trained per (block, timestep) pair.")
+                         help="Fractions of the denoising trajectory to evaluate at "
+                              "(0=first/noisiest step, 1=last/cleanest step). Each block "
+                              "has ONE SAE, shared across every fraction listed here.")
     parser.add_argument("--sae-hidden", type=int, default=4096)
     parser.add_argument("--sae-l1", type=float, default=1e-3)
     parser.add_argument("--sae-epochs", type=int, default=10)
     parser.add_argument("--sae-batch-size", type=int, default=1024)
     parser.add_argument("--sae-lr", type=float, default=1e-3)
-    parser.add_argument("--max-tokens-per-cell", type=int, default=200_000,
-                         help="Token budget PER (block, timestep) cell during SAE training "
-                              "collection (analogous to the base script's "
-                              "--max-tokens-per-block, renamed since each cell now trains "
-                              "its own SAE instead of sharing one per block).")
+    parser.add_argument("--max-tokens-per-block", type=int, default=200_000,
+                         help="Token budget PER BLOCK during SAE training collection, pooled "
+                              "across every captured denoising step (renamed from the earlier "
+                              "--max-tokens-per-cell now that training is no longer split "
+                              "per (block, timestep) cell).")
     parser.add_argument("--sae-dir", type=str, default="./sae_checkpoints")
     parser.add_argument("--load-sae", action="store_true",
                          help="Load existing SAE checkpoints from --sae-dir instead of retraining.")
@@ -633,6 +738,14 @@ def main():
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--shuffle-seed", type=int, default=0)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--save-latents", action="store_true",
+                         help="Also write out_dir/latents/<concept>_seed<seed>.npz per (concept, seed): "
+                              "the mean activation of every SAE latent plus the top-k latents' spatial "
+                              "maps, per (block, timestep) -- the raw material an entropy-based "
+                              "concentration score needs (the CSV's own `concentration` column is a "
+                              "different, variance-based metric).")
+    parser.add_argument("--latent-top-k", type=int, default=64)
+    parser.add_argument("--latent-map-size", type=int, default=32)
     args = parser.parse_args()
 
     block_names = [b.strip() for b in args.sae_blocks.split(",")]
@@ -655,28 +768,23 @@ def main():
         max_sequence_length=args.max_sequence_length, load_in_8bit=args.load_in_8bit,
     )
 
-    step_indices = sorted({int(round(f * (args.steps - 1))) for f in timestep_fractions})
-    frac_by_step = {int(round(f * (args.steps - 1))): f for f in timestep_fractions}
-
     if args.load_sae:
         print(f"Loading SAE checkpoints from {args.sae_dir} ...")
         saes = {}
         for block in block_names:
-            for step in step_indices:
-                frac = frac_by_step[step]
-                ckpt_path = os.path.join(args.sae_dir, f"sae_{block}_t{frac:.2f}.pt")
-                if not os.path.exists(ckpt_path):
-                    print(f"  [skip] no checkpoint found for {block}/t{frac:.2f} at {ckpt_path}")
-                    continue
-                d_in = probe_block_dim(extractor, block)
-                sae = SparseAutoencoder(d_in, args.sae_hidden, l1_coeff=args.sae_l1).to(args.device)
-                sae.load_state_dict(torch.load(ckpt_path, map_location=args.device))
-                saes[(block, frac)] = sae
+            ckpt_path = os.path.join(args.sae_dir, f"sae_{block}.pt")
+            if not os.path.exists(ckpt_path):
+                print(f"  [skip] no checkpoint found for {block} at {ckpt_path}")
+                continue
+            d_in = probe_block_dim(extractor, block)
+            sae = SparseAutoencoder(d_in, args.sae_hidden, l1_coeff=args.sae_l1).to(args.device)
+            sae.load_state_dict(torch.load(ckpt_path, map_location=args.device))
+            saes[block] = sae
     else:
-        saes = train_saes_grid(
-            extractor, dataset, block_names, timestep_fractions, seeds=seeds,
+        saes = train_saes_on_blocks(
+            extractor, dataset, block_names, seeds=seeds,
             num_inference_steps=args.steps, guidance_scale=args.guidance,
-            max_tokens_per_cell=args.max_tokens_per_cell, d_hidden=args.sae_hidden,
+            max_tokens_per_block=args.max_tokens_per_block, d_hidden=args.sae_hidden,
             l1_coeff=args.sae_l1, sae_epochs=args.sae_epochs, batch_size=args.sae_batch_size,
             lr=args.sae_lr, device=args.device, save_dir=args.sae_dir,
         )
@@ -686,8 +794,9 @@ def main():
 
     total_generations = len(dataset) * len(seeds)
     print(f"\n[main] evaluation phase: {len(dataset)} concepts x {len(seeds)} seeds "
-          f"= {total_generations} generations, x up to {len(saes)} (block, timestep) SAE(s) "
-          f"= up to {total_generations * len(saes)} metric rows.\n")
+          f"= {total_generations} generations, x {len(saes)} block(s) x "
+          f"{len(timestep_fractions)} timestep(s) = up to "
+          f"{total_generations * len(saes) * len(timestep_fractions)} metric rows.\n")
 
     rows = evaluate_concepts(
         extractor, dataset, saes, block_names, seeds=seeds, timestep_fractions=timestep_fractions,
@@ -695,11 +804,21 @@ def main():
         heatmap_out_size=args.heatmap_out_size, out_dir=out_dir,
         save_heatmap_images=not args.no_heatmap_images,
         heatmap_sample_rate=args.heatmap_sample_rate, resume=args.resume,
+        latents_dir=os.path.join(out_dir, "latents") if args.save_latents else None,
+        latent_top_k=args.latent_top_k, latent_map_size=args.latent_map_size,
     )
-    summary = summarize_centroid_alignment(rows)
+    summary = summarize_centroid_alignment(rows, heatmap_out_size=args.heatmap_out_size)
     with open(os.path.join(out_dir, "centroid_alignment_summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
     print(f"Saved centroid-alignment summary -> {out_dir}/centroid_alignment_summary.json")
+
+    # Now valid for FLUX too: every block's SAE is shared across timesteps
+    # (see module docstring point 3), so latent identity -- and therefore
+    # "the same concept" -- is preserved across the timesteps being compared.
+    trajectory_summary = summarize_temporal_deviation_trajectory(summary)
+    with open(os.path.join(out_dir, "temporal_deviation_trajectory.json"), "w") as f:
+        json.dump(trajectory_summary, f, indent=2)
+    print(f"Saved temporal-deviation trajectory -> {out_dir}/temporal_deviation_trajectory.json")
 
     del extractor
     gc.collect()

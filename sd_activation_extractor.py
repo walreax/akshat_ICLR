@@ -43,7 +43,7 @@ import shutil
 import sys
 import time
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -95,17 +95,27 @@ class TransformerActivationExtractor:
     """
 
     def __init__(self, transformer, block_names: Optional[List[str]] = None,
-                 step_stride: int = 1):
+                 step_stride: int = 1, target_steps: Optional[Iterable[int]] = None):
         self.transformer = transformer
         self.block_names = block_names or list_transformer_blocks(transformer)
         self.step_stride = max(1, step_stride)
+        # When set, capture ONLY these exact step indices instead of every
+        # step % step_stride==0 -- callers that already know exactly which
+        # steps they'll read (e.g. evaluate_concepts' timestep_fractions)
+        # use this to skip the GPU->CPU transfer for steps nothing ever
+        # reads, instead of capturing everything at step_stride=1 and
+        # discarding most of it. None preserves the old stride behavior.
+        self.target_steps: Optional[set] = set(target_steps) if target_steps is not None else None
         self.activations: Dict[str, Dict[int, torch.Tensor]] = defaultdict(dict)
         self._step = 0
         self._handles = []
 
     def _hook(self, name: str):
         def fn(module, inputs, output):
-            if self._step % self.step_stride != 0:
+            if self.target_steps is not None:
+                if self._step not in self.target_steps:
+                    return
+            elif self._step % self.step_stride != 0:
                 return
             if isinstance(output, tuple):
                 # diffusers' JointTransformerBlock returns
@@ -367,10 +377,13 @@ class SD3InternalsExtractor:
                 block_names: Optional[List[str]] = None,
                 attn_layer_names: Optional[List[str]] = None, heatmap_size: int = 32,
                 keep_heads: bool = False, block_step_stride: int = 1,
+                block_target_steps: Optional[Iterable[int]] = None,
                 generator=None, patcher: Optional["SAEFeaturePatcher"] = None) -> Dict:
         self.block_extractor.clear()
         self.attention_maps.clear()
         self.block_extractor.step_stride = max(1, block_step_stride)
+        self.block_extractor.target_steps = (
+            set(block_target_steps) if block_target_steps is not None else None)
         if block_names is not None:
             self.block_extractor.block_names = block_names
 
@@ -1156,7 +1169,10 @@ def evaluate_concepts(extractor: "SD3InternalsExtractor", dataset: List[Dict[str
                 result = extractor.extract(
                     prompt, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale,
                     capture_blocks=True, capture_attention=False, block_names=block_names,
-                    block_step_stride=1, generator=generator,  # need exact steps here
+                    block_target_steps=step_indices, generator=generator,
+                    # only the 3 steps timestep_fractions maps to -- not every step,
+                    # which was forcing a GPU->CPU sync-and-transfer per block on all
+                    # 28 steps to use 3 of them (see TransformerActivationExtractor).
                 )
                 image = result["image"]
                 if save_media:
