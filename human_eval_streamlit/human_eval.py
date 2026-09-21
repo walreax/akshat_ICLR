@@ -101,6 +101,18 @@ if st.query_params.get("view") == "dashboard":
         c3.metric("Excluded (bot / pre-fix)", len(dash_df) - len(dash_valid))
         c4.metric("Total rows", len(dash_df))
 
+        st.download_button(
+            "⬇️ Download bot-free results (CSV)",
+            data=dash_valid.to_csv(index=False).encode("utf-8"),
+            file_name=f"human_eval_results_clean_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+            mime="text/csv",
+            help=(
+                f"{len(dash_valid)} valid rows -- excludes {len(dash_df) - len(dash_valid)} "
+                "rows from confirmed bot activity and the pre-fix prompt/image "
+                "mismatch bug."
+            ),
+        )
+
         st.subheader("By annotator")
         st.dataframe(
             dash_valid["annotator_id"].value_counts().rename("rows"),
