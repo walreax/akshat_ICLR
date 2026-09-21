@@ -100,6 +100,9 @@ def initialize_session_state():
         # session) gets a freshly filtered order instead of reusing
         # whatever the first visitor of this session happened to see.
         "order_annotator": None,
+        # last time THIS session successfully submitted a rating, for
+        # the minimum-gap rate limit (see the submission handler).
+        "last_submit_time": None,
     }
 
     for key, default_value in defaults.items():
@@ -1279,6 +1282,37 @@ submitted = st.button(
 # ============================================================
 
 if submitted:
+
+    # --------------------------------------------------------
+    # Rate limit: reject submissions coming in faster than a human
+    # plausibly could. A real bot flood was observed on this app --
+    # one session submitted 116 ratings in 16.5 minutes, median 5s
+    # apart, many back-to-back at 3-4s -- which is not enough time to
+    # read a prompt (some are hundreds of words), look at the image,
+    # and set 4 separate scores. This app has no other auth once it's
+    # public, so this session-local minimum gap is the actual defense.
+    # --------------------------------------------------------
+
+    MIN_SECONDS_BETWEEN_SUBMISSIONS = 5
+
+    now = datetime.now()
+    last_submit = st.session_state.get("last_submit_time")
+
+    if last_submit is not None:
+
+        elapsed = (now - last_submit).total_seconds()
+
+        if elapsed < MIN_SECONDS_BETWEEN_SUBMISSIONS:
+
+            st.error(
+                f"Please take a moment to actually look at the image "
+                f"and text before scoring -- try again in "
+                f"{MIN_SECONDS_BETWEEN_SUBMISSIONS - elapsed:.0f}s."
+            )
+
+            st.stop()
+
+    st.session_state["last_submit_time"] = now
 
     # --------------------------------------------------------
     # Validate scores
