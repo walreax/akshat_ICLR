@@ -11,7 +11,7 @@ benchmarks (CLIPScore, BLIP-2, VQAScore) and real human ratings.
 | --- | --- |
 | `src/` | Core pipeline: per-model activation extractors (`sd_activation_extractor.py`, `pixart_activation_extractor.py`, `flux_activation_extractor.py`), SAE training (`train_sae.py`, `generate_sae.py`), run/eval wrappers (`run_extract*.py`, `run_sd3.py`, `run_pixart.py`), and analysis/visualization scripts. |
 | `tests/` | Validation and smoke-test scripts (manual, GPU-dependent — not a CI suite). See `tests/README.md` for what each one checks and how to run it. |
-| `data/` | The canonical 600-prompt evaluation set (`prompts_600.csv`), the calibration/test splits, concept definitions, historical training-set snapshots (`training_sets/`), and summary result files (`results/`), including the anonymized human-ratings export `results/rics.xlsx`. |
+| `data/` | The canonical 600-prompt evaluation set (`prompts_600.csv`), the calibration/test splits, concept definitions, historical training-set snapshots (`training_sets/`), and analysis-ready results (`results/`) — MIRAGE validation data, the baseline comparison, the concentration ablation, SAE top-concepts, and the anonymized human ratings (`results/rics.xlsx`). See `results/README.md`. |
 | `human_eval_streamlit/` | The Streamlit app used to collect human ratings (prompt/image pairs, 4-axis scoring). |
 | `human_eval_app/` | An unused Next.js prototype for the same task (correctly reads the canonical prompt set, but its rating storage is local-file-only and not yet backed by a real database). |
 | `imageMetric/` | Public-benchmark scoring (CLIPScore, BLIP-2, VQAScore, Inception Score) and image generation scripts, self-contained. |
@@ -31,10 +31,13 @@ raw = w0 + w_drift * drift + w_tspath * ts_path
 MIRAGE = sigmoid((raw - midpoint) / temp)
 ```
 
-On a 35-pair human-rated pilot set it correlates far better with human
-judgment (r = 0.495) than CLIPScore, BLIP-2, or VQAScore (r = 0.048,
--0.157, -0.038) on the same images. See `writeups/metric_spec.html` and
-`data/results/rics.xlsx` for the full validation data.
+On a 35-pair human-rated validation set it correlates far better with
+human judgment (r = 0.495, LOOCV r = 0.377) than CLIPScore, BLIP-2, or
+VQAScore (r = 0.050, -0.158, -0.039) on the same images. See
+`writeups/metric_spec.html` for the metric definition and
+`data/results/` for the full validation data, baseline comparison, and
+human ratings (`mirage_validation_n35.csv`, `baseline_comparison.csv`,
+`rics.xlsx`) — see `data/results/README.md` for a guided tour.
 
 ## Known limitations (tracked, not hidden)
 
@@ -49,4 +52,4 @@ judgment (r = 0.495) than CLIPScore, BLIP-2, or VQAScore (r = 0.048,
 - Attention concentration (a separate entropy-based measure of how
   focused the attention map is) does **not** improve MIRAGE when added
   as a third term — tested seven ways, all negative or overfit. See
-  `writeups/` for the full ablation.
+  `data/results/concentration_ablation_summary.md` for the full ablation.
