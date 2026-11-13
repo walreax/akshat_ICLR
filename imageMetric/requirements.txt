@@ -1,0 +1,13 @@
+torch
+diffusers>=0.29
+transformers
+accelerate
+sentencepiece
+protobuf
+pandas
+numpy
+pillow
+tqdm
+torchmetrics
+t2v_metrics
+beautifulsoup4

@@ -1,0 +1,20 @@
+{
+  "t1.0": {
+    "mean_mse": 0.5840552002191544,
+    "mean_r2": 0.8588142462256123,
+    "mean_explained_variance": 0.8588142462256123,
+    "mean_active_features_per_token": 32.0
+  },
+  "t0.5": {
+    "mean_mse": 1.7895453691482544,
+    "mean_r2": 0.39311076345935164,
+    "mean_explained_variance": 0.39311076345935164,
+    "mean_active_features_per_token": 32.0
+  },
+  "t0.0": {
+    "mean_mse": 2.2497852087020873,
+    "mean_r2": 0.46509114832930676,
+    "mean_explained_variance": 0.46509114832930676,
+    "mean_active_features_per_token": 32.0
+  }
+}

@@ -1,0 +1,44 @@
+  0 [Normal] BOLD Image Metric: Evaluation for using Mechanistic Interpretability
+  1 [Normal] BOLD Abstract
+  2 [Normal] Standard automated metrics for text-to-image generation, CLIP Score, BLIP-2 image-text matching, and VQAScore 
+  3 [Normal] BOLD 1. Introduction
+  4 [Normal] Text-to-image diffusion models are typically compared using automated scorers that judge only the relationship
+  5 [Normal] All four of these metrics share a deeper limitation. They treat the generative model as a black box and never 
+  6 [Normal] BOLD 2. Background: Concept-Attention and Sparse Autoencoders
+  7 [Normal] The concept-attention framing used here follows Tinaz, Fabian, and Soltanolkotabi, “Emergence and Evolution of
+  8 [Normal] Δ(l, t) = block_output(l, t) - block_input(l, t)
+  9 [Normal] the difference between what goes into the block and what comes out of it, rather than the raw hidden state its
+ 10 [Normal] Sparse autoencoders are used here rather than the dense hidden state directly because a block's raw activation
+ 11 [Normal] BOLD 3. Experimental Setup
+ 12 [Normal] BOLD 3.1 Models and Image Generation
+ 13 [Normal] Three models were evaluated: FLUX.1-schnell (a distilled, guidance-free model run for four inference steps), S
+ 14 [Normal] BOLD 3.2 Standard Benchmark Metrics
+ 15 [Normal] Every one of the 50.400 generated images (4200 prompts times three models) was scored with four independent, e
+ 16 [Normal] BOLD 3.3 Mechanistic Concept Extraction
+ 17 [Normal] Concept extraction was implemented separately for each model family, matched to its transformer architecture. 
+ 18 [Normal] BOLD 3.4 Proposed Concept-Level Metrics
+ 19 [List Bullet] BOLD Concept Centroid Deviation. For a fixed concept, prompt, block, and timestep, this is the spread of the concep
+ 20 [List Bullet] BOLD Cross-Concept Index. The cosine similarity between the spatial maps of two distinct concepts within the same i
+ 21 [List Bullet] BOLD Attention Concentration Index (ACI). Defined as one minus the normalized Shannon entropy of a concept's spatia
+ 22 [Normal] BOLD 3.5 Human Evaluation Infrastructure
+ 23 [Normal] Because the concept-level metrics above are only useful if they track something a human rater would actually n
+ 24 [Normal] BOLD 3.6 Example of the Prompt and the Experimental Setup
+ 35 [Normal] BOLD 4. Results
+ 36 [Normal] BOLD 4.1 Standard Metric Benchmark
+ 37 [Normal] Table 1 reports the completed four-metric benchmark across all 600 images per model. SD3 leads on every one of
+ 38 [Normal] Table 1. Standard metric benchmark, 600 images per model, all values are per-model means.
+ 39 [Normal] BOLD 4.2 Where the Standard Metrics Disagree With Each Other
+ 40 [Normal] Ranking every one of the 1,800 generated images by how far its CLIP score diverges from the average of its BLI
+ 41 [Normal] The clearest case is poem_0166, an SD3 generation of John Donne's “Song” (“Go and catch a falling star, get wi
+ 42 [Normal] A related case is story_0288, a FLUX generation of a generic passage (“people gathered around to take part in…
+ 43 [Normal] A third case runs in the opposite direction. For story_0412, a PixArt generation of two girls having a mock st
+ 44 [Normal] BOLD 4.3 Mechanistic Metric Validation: Coverage
+ 45 [Normal] Across the validated ten prompt sample, concept concentration values fell in the range 0.612 to 0.758, a moder
+ 46 [Normal] BOLD 5. Discussion and Limitations
+ 47 [Normal] The results above establish two things and leave one central question open. First, the standard metric benchma
+ 48 [Normal] What remains open is the question the project was built to answer: whether the concept-level metrics explain v
+ 49 [Normal] A second limitation is sample size in the correlation results reported in Section 4.4, which currently reflect
+ 50 [Normal] BOLD 6. Conclusion and Future Work
+ 51 [Normal] This project has built and validated a complete pipeline for evaluating text-to-image diffusion models along t
+ 52 [Normal] BOLD References
+ 53 [Normal] Tinaz, B., Fabian, Z., and Soltanolkotabi, M. Emergence and Evolution of Interpretable Concepts in Diffusion M

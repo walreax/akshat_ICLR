@@ -1,0 +1,29 @@
+{
+  "double_mid/t1.0": {
+    "d_in": 3072,
+    "n_features": 12288,
+    "k": 32,
+    "num_vectors": 20480,
+    "num_updates": 40,
+    "mean_loss": 0.7730918444693089,
+    "completed_prompts": 20
+  },
+  "double_mid/t0.5": {
+    "d_in": 3072,
+    "n_features": 12288,
+    "k": 32,
+    "num_vectors": 20480,
+    "num_updates": 40,
+    "mean_loss": 2.2750622540712357,
+    "completed_prompts": 20
+  },
+  "double_mid/t0.0": {
+    "d_in": 3072,
+    "n_features": 12288,
+    "k": 32,
+    "num_vectors": 20480,
+    "num_updates": 40,
+    "mean_loss": 2.866807061433792,
+    "completed_prompts": 20
+  }
+}

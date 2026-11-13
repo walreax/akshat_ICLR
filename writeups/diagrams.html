@@ -1,0 +1,293 @@
+<title>Pipeline Diagrams</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#14141c;
+  --surface:#1c1d28;
+  --line:#33344a;
+  --ink:#ece9e2;
+  --ink-dim:#9b98ac;
+  --ink-faint:#6d6b80;
+  --accent:#e8a33d;
+  --accent-ink:#1c1508;
+  --accent2:#7c7feb;
+}
+:root[data-theme="light"]{
+  --bg:#f3f1ea;
+  --surface:#ffffff;
+  --line:#dad5c6;
+  --ink:#221f14;
+  --ink-dim:#6b6656;
+  --ink-faint:#a19c8a;
+  --accent:#b5761e;
+  --accent-ink:#fff9ee;
+  --accent2:#4b4ec9;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Public Sans', -apple-system, Segoe UI, sans-serif;
+  padding:5vh 6vw 8vh;
+}
+h1{
+  font-family:'Fraunces', Georgia, serif;
+  font-weight:600;
+  font-size:clamp(1.6rem, 3vw, 2.2rem);
+  text-wrap:balance;
+  margin:0 0 .3rem;
+}
+.lede{
+  color:var(--ink-dim);
+  max-width:62ch;
+  line-height:1.6;
+  margin:0 0 3.5rem;
+}
+figure{
+  margin:0 0 4rem;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:1.6rem 1.6rem 1.4rem;
+}
+.fig-eyebrow{
+  font-family:'JetBrains Mono', monospace;
+  font-size:.72rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:.6rem;
+}
+.fig-title{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:1.15rem;
+  margin:0 0 1rem;
+}
+.svg-scroll{
+  overflow-x:auto;
+  border-radius:8px;
+}
+svg{
+  display:block;
+  min-width:880px;
+  width:100%;
+  height:auto;
+}
+svg text{
+  font-family:'JetBrains Mono', monospace;
+  fill:currentColor;
+}
+.node-label{ font-size:12.5px; font-weight:500; }
+.arrow-label{ font-size:10.5px; fill:var(--ink-dim); }
+.dim-label{ font-size:9.5px; fill:var(--ink-faint); letter-spacing:.02em; }
+figcaption{
+  margin-top:1.1rem;
+  font-size:.86rem;
+  line-height:1.55;
+  color:var(--ink-dim);
+  max-width:78ch;
+}
+figcaption b{ color:var(--ink); font-weight:600; }
+
+@media print{
+  @page{ size:1900px 2700px; margin:0; }
+  body{ padding:60px 70px; }
+  .svg-scroll{ overflow:visible; }
+  svg{ min-width:unset; }
+}
+</style>
+
+<h1>Pipeline diagrams</h1>
+<p class="lede">Two figures: how one generation feeds two independent scoring paths, and what actually happens inside the mechanistic path when a block's residual becomes a concept heatmap.</p>
+
+<figure>
+  <div class="fig-eyebrow">Figure 1</div>
+  <div class="fig-title">One generation, two scoring paths</div>
+  <div class="svg-scroll">
+    <svg viewBox="0 0 1820 460" role="img" aria-label="Flowchart showing a single hooked forward pass producing both a generated image, scored by standard metrics, and a block residual, scored by mechanistic metrics, with both paths converging on a regression that still needs human ratings as ground truth.">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+        </marker>
+        <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)" />
+        </marker>
+      </defs>
+
+      <!-- lane guides (subtle) -->
+      <line x1="0" y1="70" x2="1820" y2="70" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 6" opacity="0.4"/>
+      <line x1="0" y1="370" x2="1820" y2="370" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 6" opacity="0.4"/>
+
+      <!-- node: prompts -->
+      <rect x="20" y="190" width="180" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="110" y="215" text-anchor="middle" class="node-label">1,800 prompts</text>
+      <text x="110" y="232" text-anchor="middle" class="dim-label">FLUX · SD3 · PixArt</text>
+
+      <!-- arrow: prompts -> hub -->
+      <line x1="200" y1="220" x2="272" y2="220" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow)"/>
+      <text x="236" y="212" text-anchor="middle" class="arrow-label">generate</text>
+
+      <!-- node: forward pass hub -->
+      <rect x="280" y="190" width="180" height="60" rx="6" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="370" y="215" text-anchor="middle" class="node-label">forward pass</text>
+      <text x="370" y="232" text-anchor="middle" class="dim-label">block hook attached</text>
+
+      <!-- fork: hub -> image (up) -->
+      <path d="M460,205 L520,205 L560,70" fill="none" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow)"/>
+      <text x="500" y="150" text-anchor="middle" class="arrow-label">image out</text>
+
+      <!-- fork: hub -> delta (down) -->
+      <path d="M460,235 L520,235 L560,370" fill="none" stroke="var(--accent)" stroke-width="1.3" marker-end="url(#arrowAccent)"/>
+      <text x="500" y="300" text-anchor="middle" class="arrow-label" fill="var(--accent)">hook taps &#916;</text>
+
+      <!-- top lane -->
+      <rect x="560" y="40" width="180" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="650" y="65" text-anchor="middle" class="node-label">generated image</text>
+      <text x="650" y="82" text-anchor="middle" class="dim-label">the finished pixels</text>
+
+      <line x1="740" y1="70" x2="872" y2="70" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow)"/>
+      <text x="806" y="62" text-anchor="middle" class="arrow-label">score</text>
+
+      <rect x="880" y="40" width="260" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="1010" y="65" text-anchor="middle" class="node-label">CLIP · BLIP-2 · VQAScore</text>
+      <text x="1010" y="82" text-anchor="middle" class="dim-label">+ Inception, black-box scorers</text>
+
+      <line x1="1140" y1="70" x2="1272" y2="70" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow)"/>
+      <text x="1206" y="62" text-anchor="middle" class="arrow-label">produce</text>
+
+      <rect x="1280" y="40" width="200" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="1380" y="65" text-anchor="middle" class="node-label">quality scores</text>
+      <text x="1380" y="82" text-anchor="middle" class="dim-label">one number per image</text>
+
+      <!-- bottom lane -->
+      <rect x="560" y="340" width="220" height="60" rx="6" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="670" y="365" text-anchor="middle" class="node-label">&#916; = block_out &minus; block_in</text>
+      <text x="670" y="382" text-anchor="middle" class="dim-label">residual, not raw activation</text>
+
+      <line x1="780" y1="370" x2="872" y2="370" stroke="var(--accent)" stroke-width="1.3" marker-end="url(#arrowAccent)"/>
+      <text x="826" y="362" text-anchor="middle" class="arrow-label" fill="var(--accent)">pool + train</text>
+
+      <rect x="880" y="340" width="260" height="60" rx="6" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="1010" y="365" text-anchor="middle" class="node-label">SAE &#8594; concept heatmap</text>
+      <text x="1010" y="382" text-anchor="middle" class="dim-label">per (block, timestep)</text>
+
+      <line x1="1140" y1="370" x2="1272" y2="370" stroke="var(--accent)" stroke-width="1.3" marker-end="url(#arrowAccent)"/>
+      <text x="1206" y="362" text-anchor="middle" class="arrow-label" fill="var(--accent)">score</text>
+
+      <rect x="1280" y="340" width="200" height="60" rx="6" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="1380" y="360" text-anchor="middle" class="node-label">centroid dev.</text>
+      <text x="1380" y="376" text-anchor="middle" class="node-label">cross-concept &middot; ACI</text>
+
+      <!-- convergence -->
+      <path d="M1480,70 L1540,70 L1580,160" fill="none" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow)"/>
+      <path d="M1480,370 L1540,370 L1580,260" fill="none" stroke="var(--accent)" stroke-width="1.3" marker-end="url(#arrowAccent)"/>
+      <text x="1550" y="220" text-anchor="middle" class="arrow-label">correlate</text>
+
+      <rect x="1560" y="150" width="200" height="100" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="1660" y="188" text-anchor="middle" class="node-label">regress against</text>
+      <text x="1660" y="206" text-anchor="middle" class="node-label">human ratings</text>
+      <text x="1660" y="225" text-anchor="middle" class="dim-label">incremental validity</text>
+
+      <!-- missing ground truth -->
+      <rect x="1560" y="340" width="200" height="60" rx="6" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="4 4"/>
+      <text x="1660" y="365" text-anchor="middle" class="node-label" fill="var(--accent)">human ratings</text>
+      <text x="1660" y="382" text-anchor="middle" class="dim-label">not yet collected</text>
+      <line x1="1660" y1="340" x2="1660" y2="256" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="4 4" marker-end="url(#arrowAccent)"/>
+      <text x="1690" y="305" text-anchor="start" class="arrow-label" fill="var(--accent)">needed</text>
+    </svg>
+  </div>
+  <figcaption>
+    A single hooked forward pass produces two outputs at once: the finished image (top lane, scored by the four standard metrics) and a block's residual activation (bottom lane, amber, scored by the three mechanistic metrics). Nothing about the mechanistic path requires a second generation. Both paths converge on a regression that is currently missing its most important input, real human ratings, which is why that box is dashed rather than solid.
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="fig-eyebrow">Figure 2</div>
+  <div class="fig-title">From one block's residual to one concept's heatmap</div>
+  <div class="svg-scroll">
+    <svg viewBox="0 0 1400 440" role="img" aria-label="Architecture diagram showing a transformer block sequence with one block hooked, its residual computed as output minus input, encoded by a sparse autoencoder, the highest-activating latent chosen as the concept, and reshaped into a spatial heatmap with centroid and concentration read off.">
+      <defs>
+        <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+        </marker>
+        <marker id="arrow2Accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent2)" />
+        </marker>
+      </defs>
+
+      <!-- block stack strip -->
+      <text x="40" y="28" class="dim-label">double-stream</text>
+      <text x="330" y="28" class="dim-label">single-stream</text>
+      <g>
+        <rect x="40" y="36" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <rect x="112" y="36" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.5"/>
+        <rect x="184" y="36" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.5"/>
+        <rect x="256" y="36" width="60" height="40" rx="4" fill="var(--accent2)" fill-opacity="0.18" stroke="var(--accent2)" stroke-width="1.8"/>
+        <rect x="340" y="36" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.5"/>
+        <rect x="412" y="36" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.5"/>
+        <rect x="484" y="36" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.1"/>
+      </g>
+      <text x="286" y="98" text-anchor="middle" class="arrow-label" fill="var(--accent2)">hooked: double_late, t = 0.33</text>
+
+      <!-- connector down to zoomed detail -->
+      <line x1="286" y1="108" x2="286" y2="150" stroke="var(--accent2)" stroke-width="1.3" stroke-dasharray="3 4"/>
+
+      <!-- zoomed block detail -->
+      <rect x="40" y="160" width="200" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="140" y="185" text-anchor="middle" class="node-label">hidden_state_in</text>
+      <text x="140" y="202" text-anchor="middle" class="dim-label">(N_tokens &times; d)</text>
+
+      <line x1="240" y1="190" x2="352" y2="190" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow2)"/>
+
+      <rect x="360" y="160" width="180" height="60" rx="6" fill="var(--accent2)" fill-opacity="0.12" stroke="var(--accent2)" stroke-width="1.8"/>
+      <text x="450" y="185" text-anchor="middle" class="node-label">block.forward()</text>
+      <text x="450" y="202" text-anchor="middle" class="dim-label">unmodified</text>
+
+      <line x1="540" y1="190" x2="652" y2="190" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow2)"/>
+
+      <rect x="660" y="160" width="200" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="760" y="185" text-anchor="middle" class="node-label">hidden_state_out</text>
+      <text x="760" y="202" text-anchor="middle" class="dim-label">(N_tokens &times; d)</text>
+
+      <!-- taps into delta -->
+      <path d="M140,220 L140,270 L400,290" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 5" marker-end="url(#arrow2)"/>
+      <path d="M760,220 L760,270 L480,290" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 5" marker-end="url(#arrow2)"/>
+
+      <rect x="360" y="300" width="180" height="50" rx="6" fill="none" stroke="var(--accent2)" stroke-width="1.6"/>
+      <text x="450" y="330" text-anchor="middle" class="node-label">&#916; = out &minus; in</text>
+
+      <line x1="540" y1="325" x2="652" y2="325" stroke="var(--accent2)" stroke-width="1.3" marker-end="url(#arrow2Accent)"/>
+      <text x="596" y="317" text-anchor="middle" class="arrow-label" fill="var(--accent2)">encode</text>
+
+      <rect x="660" y="300" width="260" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="790" y="322" text-anchor="middle" class="node-label">z = TopK(ReLU(&#916;&middot;W_enc))</text>
+      <text x="790" y="339" text-anchor="middle" class="dim-label">sparse autoencoder</text>
+
+      <line x1="920" y1="325" x2="1032" y2="325" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrow2)"/>
+      <text x="976" y="317" text-anchor="middle" class="arrow-label">argmax mean(z)</text>
+
+      <rect x="1040" y="300" width="160" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="1120" y="330" text-anchor="middle" class="node-label">concept CID</text>
+
+      <line x1="1120" y1="300" x2="1120" y2="102" stroke="currentColor" stroke-width="1.1" stroke-dasharray="2 5" marker-end="url(#arrow2)"/>
+      <text x="1130" y="200" text-anchor="start" class="dim-label">one latent, one concept</text>
+
+      <path d="M1040,325 L980,325 L980,410" fill="none" stroke="currentColor" stroke-width="1.1" marker-end="url(#arrow2)"/>
+      <text x="990" y="400" text-anchor="start" class="arrow-label">reshape N &#8594; &#8730;N &times; &#8730;N</text>
+
+      <rect x="760" y="380" width="200" height="50" rx="6" fill="none" stroke="var(--accent2)" stroke-width="1.6"/>
+      <text x="860" y="410" text-anchor="middle" class="node-label">spatial heatmap</text>
+
+      <text x="680" y="410" text-anchor="end" class="dim-label">centroid (x,y)</text>
+      <text x="680" y="425" text-anchor="end" class="dim-label">concentration = 1&minus;H</text>
+      <line x1="760" y1="405" x2="690" y2="405" stroke="currentColor" stroke-width="1" marker-end="url(#arrow2)"/>
+    </svg>
+  </div>
+  <figcaption>
+    One block from the stack (here, <b>double_late at t = 0.33</b>) is hooked without altering its forward pass. Its residual, output minus input, is encoded by that (block, timestep)'s own sparse autoencoder; the latent with the highest mean activation across image tokens is taken as the active concept. That latent's per-token activation is reshaped back into a spatial grid, giving the heatmap that <b>centroid</b> and <b>concentration</b> are read off of.
+  </figcaption>
+</figure>

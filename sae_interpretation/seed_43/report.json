@@ -1,0 +1,390 @@
+{
+  "prompt": "a bird trapped inside an hourglass, singing looking at its distant home",
+  "seed": 43,
+  "image": "sae_interpretation/seed_43/flux_image.png",
+  "block": "double_mid",
+  "block_index": 10,
+  "timesteps": {
+    "t1.0": {
+      "step": 0,
+      "top_cids": [
+        {
+          "cid": 9665,
+          "mean_activation": 19.742326736450195,
+          "max_activation": 48.266258239746094,
+          "map": "sae_interpretation/seed_43/t1.0/cid_9665.png"
+        },
+        {
+          "cid": 10512,
+          "mean_activation": 17.527971267700195,
+          "max_activation": 43.95289611816406,
+          "map": "sae_interpretation/seed_43/t1.0/cid_10512.png"
+        },
+        {
+          "cid": 868,
+          "mean_activation": 16.708507537841797,
+          "max_activation": 46.730255126953125,
+          "map": "sae_interpretation/seed_43/t1.0/cid_868.png"
+        },
+        {
+          "cid": 7733,
+          "mean_activation": 15.818343162536621,
+          "max_activation": 38.089393615722656,
+          "map": "sae_interpretation/seed_43/t1.0/cid_7733.png"
+        },
+        {
+          "cid": 552,
+          "mean_activation": 14.579833984375,
+          "max_activation": 31.882551193237305,
+          "map": "sae_interpretation/seed_43/t1.0/cid_552.png"
+        },
+        {
+          "cid": 6624,
+          "mean_activation": 12.934303283691406,
+          "max_activation": 37.74018478393555,
+          "map": "sae_interpretation/seed_43/t1.0/cid_6624.png"
+        },
+        {
+          "cid": 10336,
+          "mean_activation": 12.920564651489258,
+          "max_activation": 35.84684371948242,
+          "map": "sae_interpretation/seed_43/t1.0/cid_10336.png"
+        },
+        {
+          "cid": 578,
+          "mean_activation": 12.349374771118164,
+          "max_activation": 31.4997615814209,
+          "map": "sae_interpretation/seed_43/t1.0/cid_578.png"
+        },
+        {
+          "cid": 1404,
+          "mean_activation": 12.324689865112305,
+          "max_activation": 34.6381950378418,
+          "map": "sae_interpretation/seed_43/t1.0/cid_1404.png"
+        },
+        {
+          "cid": 8501,
+          "mean_activation": 11.64506721496582,
+          "max_activation": 30.93348503112793,
+          "map": "sae_interpretation/seed_43/t1.0/cid_8501.png"
+        },
+        {
+          "cid": 4318,
+          "mean_activation": 10.692692756652832,
+          "max_activation": 29.955171585083008,
+          "map": "sae_interpretation/seed_43/t1.0/cid_4318.png"
+        },
+        {
+          "cid": 408,
+          "mean_activation": 10.691200256347656,
+          "max_activation": 28.79358673095703,
+          "map": "sae_interpretation/seed_43/t1.0/cid_408.png"
+        },
+        {
+          "cid": 4875,
+          "mean_activation": 9.681958198547363,
+          "max_activation": 18.39402198791504,
+          "map": "sae_interpretation/seed_43/t1.0/cid_4875.png"
+        },
+        {
+          "cid": 9303,
+          "mean_activation": 9.352151870727539,
+          "max_activation": 28.323680877685547,
+          "map": "sae_interpretation/seed_43/t1.0/cid_9303.png"
+        },
+        {
+          "cid": 2516,
+          "mean_activation": 8.87138557434082,
+          "max_activation": 26.9671630859375,
+          "map": "sae_interpretation/seed_43/t1.0/cid_2516.png"
+        },
+        {
+          "cid": 10257,
+          "mean_activation": 8.492504119873047,
+          "max_activation": 19.880643844604492,
+          "map": "sae_interpretation/seed_43/t1.0/cid_10257.png"
+        },
+        {
+          "cid": 11803,
+          "mean_activation": 6.854946136474609,
+          "max_activation": 17.621801376342773,
+          "map": "sae_interpretation/seed_43/t1.0/cid_11803.png"
+        },
+        {
+          "cid": 6928,
+          "mean_activation": 6.338569641113281,
+          "max_activation": 15.619563102722168,
+          "map": "sae_interpretation/seed_43/t1.0/cid_6928.png"
+        },
+        {
+          "cid": 9064,
+          "mean_activation": 6.050224781036377,
+          "max_activation": 15.331600189208984,
+          "map": "sae_interpretation/seed_43/t1.0/cid_9064.png"
+        },
+        {
+          "cid": 1302,
+          "mean_activation": 6.021228313446045,
+          "max_activation": 21.473609924316406,
+          "map": "sae_interpretation/seed_43/t1.0/cid_1302.png"
+        }
+      ],
+      "num_tokens": 1024,
+      "active_features_per_token": 32.0
+    },
+    "t0.5": {
+      "step": 14,
+      "top_cids": [
+        {
+          "cid": 1784,
+          "mean_activation": 9.290940284729004,
+          "max_activation": 32.19993209838867,
+          "map": "sae_interpretation/seed_43/t0.5/cid_1784.png"
+        },
+        {
+          "cid": 2554,
+          "mean_activation": 8.57486343383789,
+          "max_activation": 31.39788055419922,
+          "map": "sae_interpretation/seed_43/t0.5/cid_2554.png"
+        },
+        {
+          "cid": 7591,
+          "mean_activation": 8.445391654968262,
+          "max_activation": 26.32689666748047,
+          "map": "sae_interpretation/seed_43/t0.5/cid_7591.png"
+        },
+        {
+          "cid": 6940,
+          "mean_activation": 8.104846954345703,
+          "max_activation": 30.010692596435547,
+          "map": "sae_interpretation/seed_43/t0.5/cid_6940.png"
+        },
+        {
+          "cid": 2639,
+          "mean_activation": 8.005929946899414,
+          "max_activation": 29.82292938232422,
+          "map": "sae_interpretation/seed_43/t0.5/cid_2639.png"
+        },
+        {
+          "cid": 1909,
+          "mean_activation": 7.587768077850342,
+          "max_activation": 26.08641242980957,
+          "map": "sae_interpretation/seed_43/t0.5/cid_1909.png"
+        },
+        {
+          "cid": 6987,
+          "mean_activation": 7.311456680297852,
+          "max_activation": 36.207542419433594,
+          "map": "sae_interpretation/seed_43/t0.5/cid_6987.png"
+        },
+        {
+          "cid": 9326,
+          "mean_activation": 6.787212371826172,
+          "max_activation": 32.11971664428711,
+          "map": "sae_interpretation/seed_43/t0.5/cid_9326.png"
+        },
+        {
+          "cid": 11829,
+          "mean_activation": 6.570856094360352,
+          "max_activation": 31.61197280883789,
+          "map": "sae_interpretation/seed_43/t0.5/cid_11829.png"
+        },
+        {
+          "cid": 4267,
+          "mean_activation": 6.486473560333252,
+          "max_activation": 25.56774139404297,
+          "map": "sae_interpretation/seed_43/t0.5/cid_4267.png"
+        },
+        {
+          "cid": 6988,
+          "mean_activation": 5.541255950927734,
+          "max_activation": 23.49130630493164,
+          "map": "sae_interpretation/seed_43/t0.5/cid_6988.png"
+        },
+        {
+          "cid": 87,
+          "mean_activation": 5.537064552307129,
+          "max_activation": 26.5499267578125,
+          "map": "sae_interpretation/seed_43/t0.5/cid_87.png"
+        },
+        {
+          "cid": 7898,
+          "mean_activation": 5.535832405090332,
+          "max_activation": 27.928274154663086,
+          "map": "sae_interpretation/seed_43/t0.5/cid_7898.png"
+        },
+        {
+          "cid": 10376,
+          "mean_activation": 5.463285446166992,
+          "max_activation": 28.382291793823242,
+          "map": "sae_interpretation/seed_43/t0.5/cid_10376.png"
+        },
+        {
+          "cid": 6327,
+          "mean_activation": 5.431506633758545,
+          "max_activation": 25.028703689575195,
+          "map": "sae_interpretation/seed_43/t0.5/cid_6327.png"
+        },
+        {
+          "cid": 8477,
+          "mean_activation": 5.297482490539551,
+          "max_activation": 20.067899703979492,
+          "map": "sae_interpretation/seed_43/t0.5/cid_8477.png"
+        },
+        {
+          "cid": 10104,
+          "mean_activation": 4.767551422119141,
+          "max_activation": 25.07965660095215,
+          "map": "sae_interpretation/seed_43/t0.5/cid_10104.png"
+        },
+        {
+          "cid": 8796,
+          "mean_activation": 4.650423049926758,
+          "max_activation": 24.23750114440918,
+          "map": "sae_interpretation/seed_43/t0.5/cid_8796.png"
+        },
+        {
+          "cid": 1652,
+          "mean_activation": 4.196437835693359,
+          "max_activation": 24.744483947753906,
+          "map": "sae_interpretation/seed_43/t0.5/cid_1652.png"
+        },
+        {
+          "cid": 3965,
+          "mean_activation": 4.19142484664917,
+          "max_activation": 23.756139755249023,
+          "map": "sae_interpretation/seed_43/t0.5/cid_3965.png"
+        }
+      ],
+      "num_tokens": 1024,
+      "active_features_per_token": 32.0
+    },
+    "t0.0": {
+      "step": 27,
+      "top_cids": [
+        {
+          "cid": 209,
+          "mean_activation": 10.752714157104492,
+          "max_activation": 61.88346481323242,
+          "map": "sae_interpretation/seed_43/t0.0/cid_209.png"
+        },
+        {
+          "cid": 11229,
+          "mean_activation": 10.677041053771973,
+          "max_activation": 63.53276443481445,
+          "map": "sae_interpretation/seed_43/t0.0/cid_11229.png"
+        },
+        {
+          "cid": 10192,
+          "mean_activation": 10.013504981994629,
+          "max_activation": 67.0689697265625,
+          "map": "sae_interpretation/seed_43/t0.0/cid_10192.png"
+        },
+        {
+          "cid": 4482,
+          "mean_activation": 9.17411994934082,
+          "max_activation": 53.32746887207031,
+          "map": "sae_interpretation/seed_43/t0.0/cid_4482.png"
+        },
+        {
+          "cid": 11520,
+          "mean_activation": 7.330015182495117,
+          "max_activation": 42.22990798950195,
+          "map": "sae_interpretation/seed_43/t0.0/cid_11520.png"
+        },
+        {
+          "cid": 6734,
+          "mean_activation": 7.061338424682617,
+          "max_activation": 51.81242370605469,
+          "map": "sae_interpretation/seed_43/t0.0/cid_6734.png"
+        },
+        {
+          "cid": 9091,
+          "mean_activation": 7.02376651763916,
+          "max_activation": 43.685646057128906,
+          "map": "sae_interpretation/seed_43/t0.0/cid_9091.png"
+        },
+        {
+          "cid": 10961,
+          "mean_activation": 6.94583797454834,
+          "max_activation": 50.05435562133789,
+          "map": "sae_interpretation/seed_43/t0.0/cid_10961.png"
+        },
+        {
+          "cid": 4356,
+          "mean_activation": 6.469474792480469,
+          "max_activation": 22.37796974182129,
+          "map": "sae_interpretation/seed_43/t0.0/cid_4356.png"
+        },
+        {
+          "cid": 3197,
+          "mean_activation": 6.36403751373291,
+          "max_activation": 25.787900924682617,
+          "map": "sae_interpretation/seed_43/t0.0/cid_3197.png"
+        },
+        {
+          "cid": 10814,
+          "mean_activation": 6.272998809814453,
+          "max_activation": 37.12265396118164,
+          "map": "sae_interpretation/seed_43/t0.0/cid_10814.png"
+        },
+        {
+          "cid": 6635,
+          "mean_activation": 6.166510581970215,
+          "max_activation": 40.45874786376953,
+          "map": "sae_interpretation/seed_43/t0.0/cid_6635.png"
+        },
+        {
+          "cid": 1503,
+          "mean_activation": 5.907772064208984,
+          "max_activation": 21.0975399017334,
+          "map": "sae_interpretation/seed_43/t0.0/cid_1503.png"
+        },
+        {
+          "cid": 2111,
+          "mean_activation": 5.7466044425964355,
+          "max_activation": 40.465919494628906,
+          "map": "sae_interpretation/seed_43/t0.0/cid_2111.png"
+        },
+        {
+          "cid": 992,
+          "mean_activation": 5.629761219024658,
+          "max_activation": 47.95309066772461,
+          "map": "sae_interpretation/seed_43/t0.0/cid_992.png"
+        },
+        {
+          "cid": 11363,
+          "mean_activation": 5.1681108474731445,
+          "max_activation": 40.64437484741211,
+          "map": "sae_interpretation/seed_43/t0.0/cid_11363.png"
+        },
+        {
+          "cid": 4203,
+          "mean_activation": 5.039715766906738,
+          "max_activation": 18.049619674682617,
+          "map": "sae_interpretation/seed_43/t0.0/cid_4203.png"
+        },
+        {
+          "cid": 1030,
+          "mean_activation": 4.889009475708008,
+          "max_activation": 17.74183464050293,
+          "map": "sae_interpretation/seed_43/t0.0/cid_1030.png"
+        },
+        {
+          "cid": 193,
+          "mean_activation": 4.7403974533081055,
+          "max_activation": 27.185056686401367,
+          "map": "sae_interpretation/seed_43/t0.0/cid_193.png"
+        },
+        {
+          "cid": 10802,
+          "mean_activation": 4.701531410217285,
+          "max_activation": 18.17213249206543,
+          "map": "sae_interpretation/seed_43/t0.0/cid_10802.png"
+        }
+      ],
+      "num_tokens": 1024,
+      "active_features_per_token": 32.0
+    }
+  }
+}
