@@ -1,6 +1,10 @@
 # Does attention-concentration help MIRAGE? No.
 
-MIRAGE's linear core uses two cross-attention-geometry features, `drift`
+*This ablation is for the earlier two-feature MIRAGE variant; the current
+MIRAGE (harmonic mean of cross-seed consistency and text-image attention) is
+defined in the repository README.*
+
+The earlier variant's linear core uses two cross-attention-geometry features, `drift`
 (centroid deviation from the un-attended baseline) and `ts_path`
 (cumulative centroid path length across denoising timesteps):
 

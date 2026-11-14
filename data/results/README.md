@@ -4,7 +4,12 @@ Everything in this folder is a derived, analysis-ready output of the
 pipelines in [`src/`](../../src). Nothing here identifies an annotator,
 author, or institution -- see [Anonymity](#anonymity) below.
 
-## MIRAGE metric
+## Earlier two-feature MIRAGE variant (35-pair validation)
+
+The files below were produced with an earlier two-feature MIRAGE built from
+attention-centroid geometry only. The current MIRAGE is the harmonic mean of
+cross-seed consistency and text-image attention, defined in the repository
+[README](../../README.md#the-metric); it is not what these tables evaluate.
 
 ```
 raw    = w0 + w_drift * drift + w_tspath * ts_path
