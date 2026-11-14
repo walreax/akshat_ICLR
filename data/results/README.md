@@ -61,6 +61,11 @@ MIRAGE = sigmoid((raw - midpoint) / temp)
   mid-run at the time this was generated. Regenerate with
   `src/top_concepts.py` once both runs finish.
 
+- **`text_grounded_sd3/`** -- comparison of the argmax-by-mean-activation SAE feature rule against
+  text-grounded selection rules and prompt-independent controls on the 171 human-rated SD3 prompts
+  (see its README for the rules, scoring and caveats). The argmax latent is not aligned with the
+  concept-token attention, and no text-grounded rule improves the correlation with human ratings.
+
 ## Reproducing / regenerating
 
 All CSVs here are derived from raw pipeline output that is not checked in
